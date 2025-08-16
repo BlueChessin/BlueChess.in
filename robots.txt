@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://bluechess.in/sitemap.xml
+Sitemap: https://aksh-cloud.github.io/BlueChess.in/sitemap.xml
