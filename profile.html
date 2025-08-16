@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Blue Chess.in - Profile</title>
+<link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #88c6ff;
+    }
+    .container {
+        display: flex;
+        height: 100vh;
+    }
+    .sidebar {
+        width: 250px;
+        background-color: #0069d2;
+        color: white;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .logo {
+        width: 200px;
+        margin-bottom: 20px;
+    }
+    .menu {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        width: 100%;
+    }
+    .menu button {
+        background-color: white;
+        color: #0055a9;
+        border: none;
+        padding: 10px;
+        font-size: 1em;
+        cursor: pointer;
+        border-radius: 5px;
+        text-align: left;
+        transition: background 0.2s;
+    }
+    .menu button:hover {
+        background-color: #ddd;
+    }
+    .main {
+        flex: 1;
+        padding: 20px;
+        background-color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .profile-pic {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #0069d2;
+        margin-bottom: 20px;
+    }
+    h2 {
+        margin-bottom: 5px;
+    }
+    p {
+        margin: 3px 0;
+        font-size: 1.3em;
+        color: #363636;
+    }
+    .badges {
+        display: inline-flex;
+        gap: 7px;
+        vertical-align: middle;
+    }
+    .badges img {
+        height: 24px;
+        width: auto;
+    }
+    .elo {
+        margin-top: 5px;
+        font-size: 1.8em;
+        font-weight: bold;
+        color: #004890;
+    }
+    #avatarSelect {
+        padding: 10px 16px;
+        font-size: 1.08em;
+        border-radius: 8px;
+        border: 2px solid #0069d2;
+        background: #e9f4ff;
+        color: #004890;
+        margin-bottom: 18px;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        box-shadow: 0 2px 8px rgba(0,105,210,0.10);
+        cursor: pointer;
+        min-width: 160px;
+        max-width: 240px;
+    }
+    #avatarSelect:focus {
+        border-color: #004890;
+        background: #d0eaff;
+        box-shadow: 0 0 0 2px #88c6ff;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <img src="files/img/-w-logo.png" alt="Blue Chess.in" class="logo">
+        <div class="menu">
+            <button onclick="window.location.href='home.html'">🏠 Home</button>
+            <button onclick="window.location.href='profile.html'">👤 Profile</button>
+        </div>
+    </div>
+
+    <!-- Main Profile Section -->
+    <div class="main">
+        <img id="profilePic" class="profile-pic" src="files/img/profiles/default-avatar.png" alt="Profile Picture">
+        <select id="avatarSelect" style="margin-bottom:15px; display:none;"></select>
+        <h2 id="username">Loading...</h2>
+        <p id="email">Loading...</p>
+        <p id="elo" class="elo">ELO: Loading...</p>
+        <p id="blueRooks" class="elo">
+            <img src="files/img/blue-rook.png" alt="Blue Rooks" style="height:30px; vertical-align:middle; margin-right:5px;">
+            Loading...
+        </p>
+        
+    </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+async function loadProfile() {
+    const { data: { user }, error } = await supabaseClient.auth.getUser();
+    if (error || !user) {
+        window.location.href = "index.html";
+        return;
+    }
+
+    const { data: profileRow, error: profileError } = await supabaseClient
+        .from("profiles")
+        .select("username, profile, owner, dev, admin, coadmin, elo, blue_rooks")
+        .eq("id", user.id)
+        .single();
+
+    document.getElementById("blueRooks").innerHTML = `<img src="files/img/blue-rook.png" style="height:30px; vertical-align:middle; margin-right:5px;"> ${profileRow?.blue_rooks ?? 0}`;
+
+    if (profileError || !profileRow) {
+        document.getElementById("username").textContent = "Unknown User";
+        document.getElementById("email").textContent = user.email;
+        document.getElementById("elo").textContent = "ELO: N/A";
+        return;
+    }
+
+    // Username + badges
+    const usernameEl = document.getElementById("username");
+    usernameEl.textContent = profileRow.username || "No username set";
+
+    const badgesDiv = document.createElement("span");
+    badgesDiv.classList.add("badges");
+
+    const badgeFolder = "files/img/badges/";
+    if (profileRow.owner) badgesDiv.innerHTML += `<img src="${badgeFolder}owner.png">`;
+    if (profileRow.dev) badgesDiv.innerHTML += `<img src="${badgeFolder}dev.png">`;
+    if (profileRow.admin) badgesDiv.innerHTML += `<img src="${badgeFolder}admin.png">`;
+    if (profileRow.coadmin) badgesDiv.innerHTML += `<img src="${badgeFolder}coadmin.png">`;
+
+    usernameEl.appendChild(badgesDiv);
+
+    // Email
+    document.getElementById("email").textContent = user.email;
+
+    // ELO
+    document.getElementById("elo").textContent = "ELO: " + (profileRow.elo ?? 1200);
+
+    // Load owned avatars
+    const { data: ownedAvatars, error: ownedError } = await supabaseClient
+        .from("owned_avatars")
+        .select("avatar_path")
+        .eq("user_id", user.id);
+
+    const avatarSelect = document.getElementById("avatarSelect");
+    avatarSelect.innerHTML = "";
+
+    // Always add default avatar
+    avatarSelect.innerHTML += `<option value="">Default</option>`;
+
+    // If owner, add bluechess.in.png as a special option
+    if (profileRow.owner) {
+        avatarSelect.innerHTML += `<option value="bluechess.in.png">BlueChess.in (Owner)</option>`;
+    }
+
+    if (ownedAvatars && ownedAvatars.length > 0) {
+        ownedAvatars.forEach(a => {
+            const fileName = a.avatar_path.split("/").pop();
+            // Avoid duplicate if owner avatar is already in owned avatars
+            if (!(profileRow.owner && fileName === "bluechess.in.png")) {
+                avatarSelect.innerHTML += `<option value="${a.avatar_path}">${fileName}</option>`;
+            }
+        });
+        avatarSelect.style.display = "inline-block";
+    } else {
+        avatarSelect.style.display = profileRow.owner ? "inline-block" : "none";
+    }
+
+    // Set current avatar
+    let avatarUrl = "files/img/profiles/default-avatar.png";
+    if (profileRow.profile) {
+        avatarUrl = `https://ruevzmnbhoowmuleeqjb.supabase.co/storage/v1/object/public/avatars/${profileRow.profile}`;
+        avatarSelect.value = profileRow.profile;
+    } else {
+        avatarSelect.value = "";
+    }
+    document.getElementById("profilePic").src = avatarUrl;
+
+    // Handle avatar change
+    avatarSelect.onchange = async function() {
+        let newPath = avatarSelect.value;
+        let newUrl = "files/img/profiles/default-avatar.png";
+        if (newPath) {
+            newUrl = `https://ruevzmnbhoowmuleeqjb.supabase.co/storage/v1/object/public/avatars/${newPath}`;
+        }
+        document.getElementById("profilePic").src = newUrl;
+
+        // Update profile in DB
+        const { error: updateError } = await supabaseClient
+            .from("profiles")
+            .update({ profile: newPath || null })
+            .eq("id", user.id);
+        if (updateError) {
+            alert("Failed to update profile picture!");
+        }
+    };
+}
+
+loadProfile();
+</script>

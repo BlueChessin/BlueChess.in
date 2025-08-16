@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Blue Chess.in - Online Game Lobby</title>
+<link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #e9f4ff;
+        margin: 0;
+        padding: 0;
+    }
+    h1 {
+        text-align: center;
+        padding: 20px;
+        background: #006dd9;
+        color: white;
+        margin: 0;
+    }
+    .container {
+        max-width: 800px;
+        margin: auto;
+        padding: 20px;
+    }
+    .player-list {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .player {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #ddd;
+    }
+    .player:last-child {
+        border-bottom: none;
+    }
+    button {
+        padding: 6px 12px;
+        background: #006dd9;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    button:disabled {
+        background: gray;
+        cursor: not-allowed;
+    }
+    /* Banners */
+    .banner {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 12px 20px;
+        border-radius: 6px;
+        font-size: 16px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        cursor: pointer;
+        z-index: 9999;
+    }
+    #home {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        padding: 10px 15px;
+        background: #3e9eff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    #joinBanner { background: #28a745; color: white; }
+    #challengeBanner { background: #ffc107; color: black; cursor: default; }
+    .banner button { margin-left: 8px; }
+</style>
+</head>
+<body>
+
+<h1>Blue Chess.in - Online Lobby</h1>
+<button id="home" onclick="window.location.href='home.html'">Go Home</button>
+<div class="container">
+    <div class="player-list" id="playerList">
+        <p>Loading players...</p>
+    </div>
+</div>
+
+<!-- Two separate sounds -->
+<audio id="challengeSound" src="files/sound/challenge.wav" preload="auto"></audio>
+<audio id="acceptedSound" src="files/sound/accepted.wav" preload="auto"></audio>
+
+<script>
+const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUserId = null;
+
+// Load user
+(async function init() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+        window.location.href = "index.html";
+        return;
+    }
+    currentUserId = user.id;
+    loadPlayers();
+    listenForMatchUpdates();
+})();
+
+// Load list of online players
+async function loadPlayers() {
+    const { data: players } = await supabaseClient
+        .from("profiles")
+        .select("*");
+
+    const container = document.getElementById("playerList");
+    container.innerHTML = "";
+
+    players.forEach(p => {
+        if (p.id === currentUserId) return;
+        const div = document.createElement("div");
+        div.className = "player";
+        div.innerHTML = `
+            <span>${p.username || "Unknown"}</span>
+            <button onclick="sendChallenge('${p.id}')">Challenge</button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// Send a challenge
+async function sendChallenge(opponentId) {
+    await supabaseClient
+        .from("match_requests")
+        .insert({ challenger_id: currentUserId, challenged_id: opponentId, status: "pending" });
+    alert("Challenge sent!");
+}
+
+// Listen for match updates
+function listenForMatchUpdates() {
+    supabaseClient.channel("match_updates")
+        .on("postgres_changes", { event: "*", schema: "public", table: "match_requests" }, payload => {
+            const match = payload.new;
+            if (!match) return;
+
+            // Challenger gets join banner on acceptance
+            if (match.challenger_id === currentUserId && match.status === "accepted" && match.game_id) {
+                playSound("acceptedSound");
+                showJoinBanner(match.game_id);
+            }
+
+            // Receiver gets challenge banner
+            if (match.challenged_id === currentUserId && match.status === "pending") {
+                playSound("challengeSound");
+                showChallengeBanner(match.id, match.challenger_id);
+            }
+        })
+        .subscribe();
+}
+
+// Play specific sound
+function playSound(soundId) {
+    const sound = document.getElementById(soundId);
+    if (!sound) return;
+    sound.currentTime = 0;
+    sound.play().catch(() => {
+        console.warn("Autoplay blocked — sound will play after first user interaction.");
+    });
+}
+
+// Show join banner for challenger
+function showJoinBanner(gameId) {
+    if (document.getElementById("joinBanner")) return;
+    const banner = document.createElement("div");
+    banner.id = "joinBanner";
+    banner.className = "banner";
+    banner.textContent = "✅ Your challenge was accepted! Click to join the game.";
+    banner.onclick = () => {
+        window.location.href = `play-game.html?game=${gameId}`;
+    };
+    document.body.appendChild(banner);
+}
+
+// Show challenge banner for receiver
+async function showChallengeBanner(matchId, challengerId) {
+    if (document.getElementById("challengeBanner")) return;
+
+    // Get challenger name
+    const { data: challenger } = await supabaseClient
+        .from("profiles")
+        .select("username")
+        .eq("id", challengerId)
+        .single();
+
+    const banner = document.createElement("div");
+    banner.id = "challengeBanner";
+    banner.className = "banner";
+    banner.innerHTML = `🎯 You have received a challenge from ${challenger?.username || "Unknown"} 
+        <button onclick="acceptChallenge('${matchId}')">Accept</button>
+        <button onclick="declineChallenge('${matchId}')">Decline</button>`;
+    document.body.appendChild(banner);
+}
+
+// Accept challenge → create game & update match
+async function acceptChallenge(matchId) {
+    const { data: match } = await supabaseClient
+        .from("match_requests")
+        .select("*")
+        .eq("id", matchId)
+        .single();
+
+    if (!match) return;
+
+    const white = Math.random() < 0.5 ? match.challenger_id : match.challenged_id;
+    const black = (white === match.challenger_id) ? match.challenged_id : match.challenger_id;
+
+    const { data: game } = await supabaseClient
+        .from("games")
+        .insert({ white_id: white, black_id: black, fen: "start" })
+        .select()
+        .single();
+
+    await supabaseClient
+        .from("match_requests")
+        .update({ status: "accepted", game_id: game.id })
+        .eq("id", matchId);
+
+    document.getElementById("challengeBanner")?.remove();
+    window.location.href = `play-game.html?game=${game.id}`;
+}
+
+// Decline challenge
+async function declineChallenge(matchId) {
+    await supabaseClient
+        .from("match_requests")
+        .update({ status: "declined" })
+        .eq("id", matchId);
+    document.getElementById("challengeBanner")?.remove();
+}
+</script>
+
+</body>
+</html>

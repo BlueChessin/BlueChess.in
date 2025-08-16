@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Blue Chess.in - Sign Up</title>
+  <link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+    .left {
+      flex: 1;
+      background: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .left h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .left input {
+      padding: 10px;
+      margin-bottom: 10px;
+      width: 220px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .left button {
+      width: 220px;
+      padding: 12px;
+      margin-top: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #4A90E2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    .left button:hover {
+      background: #357ABD;
+    }
+    .right {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: white;
+    }
+    .right img {
+      max-width: 90%;
+      height: auto;
+    }
+    .logo {
+        width: 250px;
+        margin: 0 auto 20px;
+        display: block;
+    }
+  </style>
+</head>
+<body>
+
+<div class="left">
+<img src="files/img/-w-logo.png" alt="Blue Chess.in" class="logo">
+  <h1>Create an Account!</h1>
+  <input type="text" id="username" placeholder="Username">
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Password">
+  <input type="password" id="confirm-password" placeholder="Confirm Password">
+  <button onclick="signUp()">Sign Up</button>
+  (or)
+  <button onclick="window.location.href='index.html'">Sign In</button>
+</div>
+
+<div class="right">
+  <img src="files/img/chessboard2.png" alt="Chessboard">
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY"; // your full anon key
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+async function signUp() {
+    const username = document.getElementById("username").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("confirm-password").value;
+
+    if (password !== confirmPassword) {
+        alert("Passwords do not match!");
+        return;
+    }
+
+    // Create user
+    const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
+        email,
+        password
+    });
+
+    if (signUpError) {
+        alert("Signup failed: " + signUpError.message);
+        return;
+    }
+
+    // Update profiles table with username
+    const userId = signUpData.user.id;
+    const { error: updateError } = await supabaseClient
+        .from("profiles")
+        .update({ username })
+        .eq("id", userId);
+
+    if (updateError) {
+        alert("Profile update failed: " + updateError.message);
+        return;
+    }
+
+    alert("Signup successful! Please log in.");
+    window.location.href = "index.html";
+}
+</script>
+
+
+</body>
+</html>

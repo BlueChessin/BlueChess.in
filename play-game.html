@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Blue Chess.in - Online Game</title>
+<link rel="stylesheet" href="chessboard.js/chessboard.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
+<script src="chessboard.js/chessboard.js"></script>
+<script src="chess.js/chess.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+    body { margin: 0; font-family: Arial, sans-serif; background-color: #e9f4ff; color: #333; }
+    .container { display: flex; height: 100vh; }
+    .sidebar { width: 250px; background-color: #004890; color: white; display: flex; flex-direction: column; padding: 20px; }
+    .sidebar h2 { text-align: center; margin-bottom: 20px; font-size: 1.4em; }
+    .player { background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+    .main { flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px; gap: 20px; flex-wrap: wrap; }
+    .board-container { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    #board { width: min(90vw, 500px); }
+    .player-name { text-align: center; font-weight: bold; margin: 5px 0; display: flex; justify-content: center; align-items: center; gap: 4px; }
+    .player-name img.badge { height: 18px; vertical-align: middle; }
+    .moves { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 200px; overflow-y: auto; max-height: 500px; }
+    .promotion-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 999; text-align: center; }
+    .promotion-popup img { width: 60px; margin: 5px; cursor: pointer; }
+    .highlight-square { background-color: rgba(255, 255, 0, 0.5) !important; }
+    .possible-move { position: relative; }
+    .possible-move::after { content: ""; width: 50%; height: 50%; background: rgba(0, 162, 255, 0.6); border-radius: 50%; position: absolute; top: 25%; left: 25%; }
+    .controls { margin-top: auto; }
+    .controls button { width: 100%; padding: 10px; margin-top: 10px; font-size: 1em; border: none; border-radius: 5px; cursor: pointer; }
+    .resign { background: #ff4d4d; color: white; }
+    .draw { background: #ffc107; color: white; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div class="sidebar">
+        <h2>Blue Chess.in</h2>
+        <div class="controls">
+            <button class="resign" onclick="resign()">Resign</button>
+            <button class="draw" onclick="offerDraw()">Offer Draw</button>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="board-container">
+            <div class="player-name" id="topPlayerName">Loading...</div>
+            <div id="board"></div>
+            <div class="player-name" id="bottomPlayerName">Loading...</div>
+        </div>
+        <div class="moves">
+            <h3>Moves</h3>
+            <ol id="moveList"></ol>
+        </div>
+    </div>
+</div>
+
+<div id="promotionPopup" class="promotion-popup" style="display:none;">
+    <p>Promote to:</p>
+    <div id="promotionChoices"></div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY"; 
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let game = new Chess();
+let selectedSquare = null;
+let gameId = new URLSearchParams(window.location.search).get("game");
+let myColor = null;
+let opponentId = null;
+let currentUserId = null;
+let gameRow = null; // global game row
+
+let board = Chessboard('board', {
+    position: 'start',
+    pieceTheme: 'chessboard.js/img/chesspieces/bluechess.in/{piece}.png'
+});
+
+function updateMoveList() {
+    let moves = game.history();
+    let list = document.getElementById("moveList");
+    list.innerHTML = "";
+    moves.forEach(m => {
+        let li = document.createElement("li");
+        li.textContent = m;
+        list.appendChild(li);
+    });
+}
+
+function clearHighlights() {
+    $('#board .square-55d63').removeClass('highlight-square possible-move');
+}
+
+function highlightSquare(square) {
+    $(`#board .square-${square}`).addClass('highlight-square');
+}
+
+function highlightPossibleMoves(square) {
+    let moves = game.moves({ square, verbose: true });
+    moves.forEach(m => {
+        $(`#board .square-${m.to}`).addClass('possible-move');
+    });
+}
+
+async function onSquareClick(square) {
+    if (game.turn() !== myColor) return;
+
+    if (selectedSquare === null) {
+        let piece = game.get(square);
+        if (piece && piece.color === game.turn()) {
+            selectedSquare = square;
+            clearHighlights();
+            highlightSquare(square);
+            highlightPossibleMoves(square);
+        }
+    } else {
+        if (square === selectedSquare) {
+            selectedSquare = null;
+            clearHighlights();
+            return;
+        }
+
+        let piece = game.get(selectedSquare);
+        if (piece && piece.type === 'p' &&
+            ((piece.color === 'w' && square[1] === '8') ||
+             (piece.color === 'b' && square[1] === '1'))) {
+            showPromotionDialog(selectedSquare, square);
+            return;
+        }
+
+        let move = game.move({ from: selectedSquare, to: square });
+        if (move) {
+            board.position(game.fen());   
+            updateMoveList();
+            await syncGame();
+        }
+        selectedSquare = null;
+        clearHighlights();
+    }
+}
+
+function showPromotionDialog(from, to) {
+    let popup = document.getElementById("promotionPopup");
+    let choicesDiv = document.getElementById("promotionChoices");
+    choicesDiv.innerHTML = "";
+    ['q', 'r', 'b', 'n'].forEach(piece => {
+        let img = document.createElement("img");
+        img.src = `chessboard.js/img/chesspieces/bluechess.in/${game.turn()}${piece.toUpperCase()}.png`;
+        img.onclick = async () => {
+            game.move({ from, to, promotion: piece });
+            board.position(game.fen());   
+            updateMoveList();
+            popup.style.display = 'none';
+            selectedSquare = null;
+            clearHighlights();
+            await syncGame();
+        };
+        choicesDiv.appendChild(img);
+    });
+    popup.style.display = 'block';
+}
+
+async function syncGame() {
+    // update board state in DB
+    await supabaseClient.from("games").update({
+        fen: game.fen(),
+        moves: game.history()
+    }).eq("id", gameId);
+
+    // check for game over
+    if (game.in_checkmate()) {
+        const winner = game.turn() === 'w' ? gameRow.black_id : gameRow.white_id; 
+        await supabaseClient.from("games")
+            .update({ winner_id: winner, result_reason: "checkmate" })
+            .eq("id", gameId);
+    } else if (game.in_stalemate()) {
+        await supabaseClient.from("games")
+            .update({ winner_id: null, result_reason: "stalemate" })
+            .eq("id", gameId);
+    } else if (game.in_draw() || game.in_threefold_repetition() || game.insufficient_material()) {
+        await supabaseClient.from("games")
+            .update({ winner_id: null, result_reason: "draw" })
+            .eq("id", gameId);
+    }
+}
+
+async function resign() {
+    await supabaseClient
+    .from("games")
+    .update({ 
+        winner_id: opponentId, 
+        result_reason: "resignation" 
+    })
+    .eq("id", gameId);
+}
+
+function offerDraw() {
+    alert("Draw offered!");
+}
+
+function addBadgesToName(container, profile) {
+    container.textContent = profile.username || "Unknown";
+    if (profile.owner) container.innerHTML += ` <img src="files/img/badges/owner.png" class="badge">`;
+    if (profile.dev) container.innerHTML += ` <img src="files/img/badges/dev.png" class="badge">`;
+    if (profile.admin) container.innerHTML += ` <img src="files/img/badges/admin.png" class="badge">`;
+    if (profile.coadmin) container.innerHTML += ` <img src="files/img/badges/coadmin.png" class="badge">`;
+}
+
+function listenForGameUpdates() {
+    supabaseClient.channel(`game_${gameId}`)
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "games", filter: `id=eq.${gameId}` }, payload => {
+            if (payload.new.moves) {
+                game.reset();
+                payload.new.moves.forEach(m => game.move(m));
+                board.position(game.fen());
+                updateMoveList();
+            }
+            if (payload.new.winner_id !== null || payload.new.result_reason) {
+                window.location.href = `notify.html?game=${gameId}&winner=${payload.new.winner_id}&reason=${payload.new.result_reason}`;
+                return;
+            }
+        })
+        .subscribe();
+}
+
+(async function init() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+        window.location.href = "index.html";
+        return;
+    }
+    currentUserId = user.id;
+
+    const { data: gameRowData } = await supabaseClient
+        .from("games")
+        .select("*")
+        .eq("id", gameId)
+        .single();
+    gameRow = gameRowData;
+
+    if (!gameRow) {
+        alert("Game not found");
+        window.location.href = "home.html";
+        return;
+    }
+
+    myColor = (user.id === gameRow.white_id) ? 'w' : 'b';
+    opponentId = myColor === 'w' ? gameRow.black_id : gameRow.white_id;
+
+    // Fetch profiles with badges
+    const { data: whiteProfile } = await supabaseClient
+        .from("profiles")
+        .select("username, owner, dev, admin, coadmin")
+        .eq("id", gameRow.white_id)
+        .single();
+
+    const { data: blackProfile } = await supabaseClient
+        .from("profiles")
+        .select("username, owner, dev, admin, coadmin")
+        .eq("id", gameRow.black_id)
+        .single();
+
+    if (myColor === 'w') {
+        addBadgesToName(document.getElementById("topPlayerName"), { ...blackProfile, username: (blackProfile?.username || "Opponent") + " (Black)" });
+        addBadgesToName(document.getElementById("bottomPlayerName"), { ...whiteProfile, username: (whiteProfile?.username || "You") + " (White)" });
+    } else {
+        addBadgesToName(document.getElementById("topPlayerName"), { ...whiteProfile, username: (whiteProfile?.username || "Opponent") + " (White)" });
+        addBadgesToName(document.getElementById("bottomPlayerName"), { ...blackProfile, username: (blackProfile?.username || "You") + " (Black)" });
+    }
+
+    if (myColor === 'b') {
+        board.orientation('black');
+    }
+
+    if (gameRow.moves) {
+        game.reset();
+        gameRow.moves.forEach(m => game.move(m));
+    } else {
+        game.load(gameRow.fen);
+    }
+    board.position(game.fen());
+    updateMoveList();
+
+    listenForGameUpdates();
+})();
+
+$('#board').on('click', '.square-55d63', function() {
+    let square = $(this).attr('data-square');
+    onSquareClick(square);
+});
+</script>
+</body>
+</html>

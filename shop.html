@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Blue Chess.in - Avatar Shop</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
+<style>
+    body { font-family: Arial, sans-serif; background: #e9f4ff; margin: 0; padding: 20px; }
+    h1 { text-align: center; color: #004890; }
+    .shop { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
+    .item {
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        text-align: center;
+        width: 150px;
+    }
+    .item img { width: 100px; height: 100px; border-radius: 8px; }
+    .price { margin: 10px 0; font-weight: bold; width: 10px; }
+    button {
+        background: #004890;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+    button:hover { background: #003370; }
+    .price img {
+        height: 16px;
+        width: 16px;
+        vertical-align: middle;
+        margin-left: 0px;
+    }
+    button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+    #home {
+        background: #004890;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        position: fixed;
+        top: 20px;
+        right: 20px;
+    }
+</style>
+</head>
+<body>
+<h1>Avatar Shop</h1>
+<button id="home" onclick="window.location.href='home.html'">Go Home</button>
+<div class="shop" id="shop"></div>
+
+<script>
+const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const avatarFiles = ["car.jpg", "football.jpg", "mrbeast.jpg", "sword.webp", "minecraft.jpg"];
+
+const AVATAR_PRICES = {
+    "car.jpg": 50,
+    "football.jpg": 100,
+    "sword.webp": 400,
+    "mrbeast.jpg": 200,
+    "minecraft.jpg": 300,
+
+};
+
+
+async function loadShop() {
+    console.log("Loading shop...");
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) { 
+        console.error("User error:", userError); 
+        alert("Login required"); 
+        window.location.href="index.html"; 
+        return; 
+    }
+    console.log("User:", user);
+
+    // Get owned avatars
+    const { data: owned, error: ownedError } = await supabaseClient
+        .from("owned_avatars")
+        .select("avatar_path")
+        .eq("user_id", user.id);
+    if (ownedError) { 
+        console.error("Owned avatars error:", ownedError); 
+        return; 
+    }
+    console.log("Owned avatars:", owned);
+    const ownedSet = new Set((owned || []).map(a => a.avatar_path));
+
+    // Static list of avatars
+    
+    const shopDiv = document.getElementById("shop");
+    shopDiv.innerHTML = "";
+
+    avatarFiles.forEach(fileName => {
+        const price = AVATAR_PRICES[fileName] || 20;
+        const publicUrl = `https://ruevzmnbhoowmuleeqjb.supabase.co/storage/v1/object/public/avatars/buyable/${fileName}`;
+        console.log(`Avatar: ${fileName}, URL: ${publicUrl}`);
+
+        const alreadyOwned = ownedSet.has(`buyable/${fileName}`);
+
+        const item = document.createElement("div");
+        item.className = "item";
+        item.innerHTML = `
+            <img src="${publicUrl}" alt="${fileName}">
+            <div class="price">${price} <img src="files/img/-s-blue-rook.png" height="6"></div>
+            <button ${alreadyOwned ? "disabled" : ""} onclick="buyAvatar(this, '${fileName}', ${price})">
+                ${alreadyOwned ? "Owned" : "Buy"}
+            </button>
+        `;
+        shopDiv.appendChild(item);
+    });
+}
+
+async function buyAvatar(btn, fileName, price) {
+    btn.disabled = true;
+    console.log(`Buying avatar: ${fileName} for ${price}`);
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) { 
+        console.error("User error:", userError); 
+        alert("Login required"); 
+        window.location.href="index.html"; 
+        return; 
+    }
+
+    const { data: profile, error: profileError } = await supabaseClient.from("profiles").select("blue_rooks").eq("id", user.id).single();
+    if (profileError || !profile) { 
+        console.error("Profile error:", profileError); 
+        alert("Profile error"); 
+        btn.disabled = false; 
+        return; 
+    }
+    console.log("Profile:", profile);
+
+    if ((profile.blue_rooks ?? 0) < price) {
+        alert("Not enough Blue Rooks!");
+        btn.disabled = false;
+        return;
+    }
+
+    // Check if already owned
+    const { data: owned, error: ownedError } = await supabaseClient
+        .from("owned_avatars")
+        .select("avatar_path")
+        .eq("user_id", user.id)
+        .eq("avatar_path", `buyable/${fileName}`)
+        .maybeSingle();
+    if (ownedError) { 
+        console.error("Error checking ownership:", ownedError); 
+        alert("Error checking ownership."); 
+        btn.disabled = false; 
+        return; 
+    }
+    if (owned) { 
+        alert("You already own this avatar."); 
+        btn.disabled = false; 
+        return; 
+    }
+
+    const updateRes = await supabaseClient.from("profiles").update({ blue_rooks: profile.blue_rooks - price }).eq("id", user.id);
+    if (updateRes.error) { 
+        console.error("Failed to update balance:", updateRes.error); 
+        alert("Failed to update balance."); 
+        btn.disabled = false; 
+        return; 
+    }
+    console.log("Balance updated.");
+
+    const insertRes = await supabaseClient.from("owned_avatars").insert({ user_id: user.id, avatar_path: `buyable/${fileName}` });
+    if (insertRes.error) { 
+        console.error("Failed to add avatar:", insertRes.error); 
+        alert("Failed to add avatar."); 
+        btn.disabled = false; 
+        return; 
+    }
+    console.log("Avatar added to owned_avatars.");
+
+    alert("Avatar purchased!");
+    await loadShop();
+}
+
+loadShop();
+</script>

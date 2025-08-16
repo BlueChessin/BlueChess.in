@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Blue Chess.in - Login</title>
+  <link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+      background-color: #7fb2ff;
+    }
+    .left {
+      flex: 1;
+      background: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .left h1 {
+      font-size: 28px;
+      margin-bottom: 40px;
+    }
+    .left input {
+      padding: 10px;
+      margin-bottom: 10px;
+      width: 200px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .left button {
+      width: 200px;
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 18px;
+      cursor: pointer;
+      background: #4A90E2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    .left button:hover {
+      background: #357ABD;
+    }
+    .right {
+      flex: 1;
+      background-color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .right img {
+      max-width: 90%;
+      height: auto;
+    }
+    .logo {
+        width: 250px;
+        margin: 0 auto 20px;
+        display: block;
+    }
+  </style>
+</head>
+<body>
+
+<div class="left">
+  <img src="files/img/-w-logo.png" alt="Blue Chess.in" class="logo">
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Password">
+  <button onclick="signIn()">Sign In</button>
+  (or)
+  <button onclick="window.location.href='signup.html'">Sign Up</button>
+</div>
+
+<div class="right">
+  <!-- Replace chessboard.png with your board image -->
+  <img src="files/img/chessboard1.png" alt="Chessboard">
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script>
+  const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  async function signIn() {
+    const { error } = await supabaseClient.auth.signInWithPassword({
+      email: document.getElementById('email').value,
+      password: document.getElementById('password').value
+    });
+
+    if (error) {
+      alert(error.message);
+    } else {
+      window.location.href = "home.html";
+    }
+  }
+</script>
+
+</body>
+</html>

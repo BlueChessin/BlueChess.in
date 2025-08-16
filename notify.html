@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Blue Chess.in - Game Result</title>
+<link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #e9f4ff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        color: #333;
+    }
+    .card {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        text-align: center;
+        width: 420px;
+    }
+    h1 {
+        margin-top: 0;
+        color: #004890;
+    }
+    .player {
+        margin: 15px 0;
+        font-size: 18px;
+        font-weight: bold;
+    }
+    .player img.badge {
+        height: 18px;
+        margin-left: 4px;
+        vertical-align: middle;
+    }
+    .reason {
+        margin: 20px 0;
+        font-size: 16px;
+        color: #555;
+    }
+    .elo-change, .currency-change {
+        font-size: 16px;
+        margin: 10px 0;
+    }
+    .elo-change span {
+        font-weight: bold;
+    }
+    .currency-change img {
+        height: 18px;
+        vertical-align: middle;
+        margin-right: 5px;
+    }
+    button {
+        background: #004890;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    button:hover {
+        background: #003370;
+    }
+</style>
+</head>
+<body>
+
+<div class="card">
+    <h1>Game Over</h1>
+    <div class="player" id="winner">Winner: Loading...</div>
+    <div class="player" id="loser">Loser: Loading...</div>
+    <div class="reason" id="reason">Reason: Loading...</div>
+
+    <div class="elo-change" id="eloChange">Updating Elo...</div>
+    <div class="currency-change" id="blueRookChange">
+        <img src="files/img/blue-rook.png" alt="Blue Rooks"> Updating Blue Rooks...
+    </div>
+
+    <button onclick="window.location.href='home.html'">Back to Home</button>
+</div>
+
+<script>
+const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY"; // replace with your anon key
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function addBadgesToName(container, profile, label) {
+    container.innerHTML = `${label}: ${profile.username || "Unknown"}`;
+    if (profile.owner)   container.innerHTML += ` <img src="files/img/badges/owner.png" class="badge">`;
+    if (profile.dev)     container.innerHTML += ` <img src="files/img/badges/dev.png" class="badge">`;
+    if (profile.admin)   container.innerHTML += ` <img src="files/img/badges/admin.png" class="badge">`;
+    if (profile.coadmin) container.innerHTML += ` <img src="files/img/badges/coadmin.png" class="badge">`;
+}
+
+function calculateEloChange(ratingA, ratingB, result, k = 32) {
+    const expectedScore = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
+    const actualScore = result; // 1 = win, 0 = loss, 0.5 = draw
+    return Math.round(k * (actualScore - expectedScore));
+}
+
+(async function init() {
+    const gameId = new URLSearchParams(window.location.search).get("game");
+    if (!gameId) {
+        alert("No game ID provided!");
+        window.location.href = "home.html";
+        return;
+    }
+
+    const { data: game, error } = await supabaseClient
+        .from("games")
+        .select("*")
+        .eq("id", gameId)
+        .single();
+
+    if (error || !game) {
+        alert("Game not found");
+        window.location.href = "home.html";
+        return;
+    }
+
+    // Fetch both players
+    const { data: whiteProfile } = await supabaseClient
+        .from("profiles")
+        .select("id, username, owner, dev, admin, coadmin, elo, blue_rooks")
+        .eq("id", game.white_id)
+        .single();
+
+    const { data: blackProfile } = await supabaseClient
+        .from("profiles")
+        .select("id, username, owner, dev, admin, coadmin, elo, blue_rooks")
+        .eq("id", game.black_id)
+        .single();
+
+    if (!whiteProfile || !blackProfile) {
+        alert("Profiles not found");
+        return;
+    }
+
+    // Determine winner & loser
+    const winnerId = game.winner_id;
+    const loserId = (winnerId === game.white_id) ? game.black_id : game.white_id;
+    const winnerProfile = (winnerId === whiteProfile.id) ? whiteProfile : blackProfile;
+    const loserProfile  = (loserId === whiteProfile.id)  ? whiteProfile : blackProfile;
+
+    addBadgesToName(document.getElementById("winner"), winnerProfile, "🏆 Winner");
+    addBadgesToName(document.getElementById("loser"), loserProfile, "❌ Loser");
+    document.getElementById("reason").textContent = "Reason: " + (game.result_reason || "Unknown");
+
+    // Elo update
+    const resultReason = game.result_reason || "unknown";
+    let winnerScore = 1, loserScore = 0;
+    if (resultReason === "draw") {
+        winnerScore = 0.5;
+        loserScore = 0.5;
+    }
+
+    const eloChangeWinner = calculateEloChange(winnerProfile.elo ?? 1200, loserProfile.elo ?? 1200, winnerScore);
+    const eloChangeLoser  = calculateEloChange(loserProfile.elo ?? 1200, winnerProfile.elo ?? 1200, loserScore);
+
+    await supabaseClient.from("profiles").update({
+        elo: (winnerProfile.elo ?? 1200) + eloChangeWinner,
+        blue_rooks: (winnerProfile.blue_rooks ?? 0) + (resultReason === "draw" ? 5 : 10)
+    }).eq("id", winnerProfile.id);
+
+    await supabaseClient.from("profiles").update({
+        elo: (loserProfile.elo ?? 1200) + eloChangeLoser,
+        blue_rooks: (loserProfile.blue_rooks ?? 0) + (resultReason === "draw" ? 5 : 2)
+    }).eq("id", loserProfile.id);
+
+    // Show results
+    document.getElementById("eloChange").innerHTML = `
+        <span>${winnerProfile.username}</span>: ${winnerProfile.elo} → ${winnerProfile.elo + eloChangeWinner} 
+        <br><span>${loserProfile.username}</span>: ${loserProfile.elo} → ${loserProfile.elo + eloChangeLoser}
+    `;
+
+    document.getElementById("blueRookChange").innerHTML = `
+        <img src="files/img/blue-rook.png"> ${winnerProfile.username} gained ${resultReason === "draw" ? 5 : 10} Blue Rooks<br>
+        <img src="files/img/blue-rook.png"> ${loserProfile.username} gained ${resultReason === "draw" ? 5 : 2} Blue Rooks
+    `;
+})();
+</script>
+</body>
+</html>

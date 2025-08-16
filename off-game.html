@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Blue Chess.in - Offline Game</title>
+<link rel="stylesheet" href="chessboard.js/chessboard.css">
+<link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="chessboard.js/chessboard.js"></script>
+<script src="chess.js/chess.min.js"></script>
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #e9f4ff;
+        color: #333;
+    }
+    .container {
+        display: flex;
+        height: 100vh;
+    }
+    .sidebar {
+        width: 250px;
+        background-color: #004890;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+    }
+    .sidebar h2 {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 1.4em;
+    }
+    .player {
+        background: rgba(255,255,255,0.15);
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    .main {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .board-container {
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    #board {
+        width: min(90vw, 500px);
+    }
+    .moves {
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        width: 200px;
+        overflow-y: auto;
+        max-height: 500px;
+    }
+    /* Promotion popup */
+    .promotion-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        z-index: 999;
+        text-align: center;
+    }
+    .promotion-popup img {
+        width: 60px;
+        margin: 5px;
+        cursor: pointer;
+    }
+    /* Selected piece highlight */
+    .highlight-square {
+        background-color: rgba(255, 255, 0, 0.5) !important;
+    }
+
+    /* Possible move indicator */
+    .possible-move {
+        position: relative;
+    }
+    .possible-move::after {
+        content: "";
+        width: 50%;
+        height: 50%;
+        background: rgba(0, 162, 255, 0.6);
+        border-radius: 50%;
+        position: absolute;
+        top: 25%;
+        left: 25%;
+    }
+    .controls {
+        margin-top: auto;
+    }
+    .controls button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 10px;
+        font-size: 1em;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .resign { background: #ff4d4d; color: white; }
+    .draw { background: #ffc107; color: white; }
+    .restart { background: #28a745; color: white; }
+    .go-home { background: #285fa7; color: white; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>Blue Chess.in</h2>
+        <div class="player">White: <span id="whitePlayer">You</span></div>
+        <div class="player">Black: <span id="blackPlayer">Opponent</span></div>
+        <div class="controls">
+            <button class="go-home" onclick="window.location.href = 'home.html';">Go Home</button>
+            <button class="resign" onclick="resign()">Resign</button>
+            <button class="draw" onclick="offerDraw()">Offer Draw</button>
+            <button class="restart" onclick="restartGame()">Restart</button>
+        </div>
+    </div>
+
+    <!-- Main Game Area -->
+    <div class="main">
+        <div class="board-container">
+            <div id="board"></div>
+        </div>
+        <div class="moves">
+            <h3>Moves</h3>
+            <ol id="moveList"></ol>
+        </div>
+    </div>
+</div>
+
+<!-- Promotion Popup -->
+<div id="promotionPopup" class="promotion-popup" style="display:none;">
+    <p>Promote to:</p>
+    <div id="promotionChoices"></div>
+</div>
+
+<script>
+    let game = new Chess();
+    let selectedSquare = null;
+
+    let board = Chessboard('board', {
+        position: 'start',
+        pieceTheme: 'chessboard.js/img/chesspieces/bluechess.in/{piece}.png'
+    });
+
+    function updateMoveList() {
+        let moves = game.history();
+        let list = document.getElementById("moveList");
+        list.innerHTML = "";
+        moves.forEach((m) => {
+            let li = document.createElement("li");
+            li.textContent = m;
+            list.appendChild(li);
+        });
+    }
+
+    function clearHighlights() {
+        $('#board .square-55d63').removeClass('highlight-square possible-move');
+    }
+
+    function highlightSquare(square) {
+        $(`#board .square-${square}`).addClass('highlight-square');
+    }
+
+    function highlightPossibleMoves(square) {
+        let moves = game.moves({ square, verbose: true });
+        moves.forEach(m => {
+            $(`#board .square-${m.to}`).addClass('possible-move');
+        });
+    }
+
+    function onSquareClick(square) {
+        if (selectedSquare === null) {
+            let piece = game.get(square);
+            if (piece && piece.color === game.turn()) {
+                selectedSquare = square;
+                clearHighlights();
+                highlightSquare(square);
+                highlightPossibleMoves(square);
+            }
+        } else {
+            if (square === selectedSquare) {
+                // Deselect if same square clicked
+                selectedSquare = null;
+                clearHighlights();
+                return;
+            }
+
+            let piece = game.get(selectedSquare);
+            if (piece && piece.type === 'p' &&
+                ((piece.color === 'w' && square[1] === '8') ||
+                 (piece.color === 'b' && square[1] === '1'))) {
+                showPromotionDialog(selectedSquare, square);
+                return;
+            }
+
+            let move = game.move({ from: selectedSquare, to: square });
+            if (move !== null) {
+                board.position(game.fen());
+                updateMoveList();
+                checkGameOver();
+            }
+            selectedSquare = null;
+            clearHighlights();
+        }
+    }
+
+    function showPromotionDialog(from, to) {
+        let popup = document.getElementById("promotionPopup");
+        let choicesDiv = document.getElementById("promotionChoices");
+        choicesDiv.innerHTML = "";
+        ['q', 'r', 'b', 'n'].forEach(piece => {
+            let img = document.createElement("img");
+            img.src = `chessboard.js/img/chesspieces/bluechess.in/${game.turn()}${piece.toUpperCase()}.png`;
+            img.onclick = () => {
+                game.move({ from, to, promotion: piece });
+                board.position(game.fen());
+                updateMoveList();
+                checkGameOver();
+                popup.style.display = 'none';
+                selectedSquare = null;
+                clearHighlights();
+            };
+            choicesDiv.appendChild(img);
+        });
+        popup.style.display = 'block';
+    }
+
+    function checkGameOver() {
+        if (game.in_checkmate()) {
+            alert("Checkmate! " + (game.turn() === 'w' ? "Black" : "White") + " wins!");
+        } else if (game.in_draw()) {
+            alert("Draw!");
+        }
+    }
+
+    function restartGame() {
+        game.reset();
+        board.start();
+        updateMoveList();
+        selectedSquare = null;
+        clearHighlights();
+    }
+
+    $('#board').on('click', '.square-55d63', function() {
+        let square = $(this).attr('data-square');
+        onSquareClick(square);
+    });
+
+    function resign() {
+        alert("You resigned! Bot wins!");
+        game.reset();
+        board.start();
+        updateMoveList();
+    }
+
+    function offerDraw() {
+        alert("Draw offered! Bot is thinking...");
+    }
+
+    function restartGame() {
+        game.reset();
+        board.start();
+        updateMoveList();
+    }
+</script>
