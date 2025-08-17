@@ -2,37 +2,51 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
   <url>
-    <loc>https://aksh-cloud.github.io/BlueChess.in/index.html</loc>
-    <lastmod>2025-08-16</lastmod>
+    <loc>https://aksh-cloud.github.io/BlueChess.in/</loc>
+    <lastmod>2025-08-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
   <url>
     <loc>https://aksh-cloud.github.io/BlueChess.in/home.html</loc>
-    <lastmod>2025-08-16</lastmod>
+    <lastmod>2025-08-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
     <loc>https://aksh-cloud.github.io/BlueChess.in/bots.html</loc>
-    <lastmod>2025-08-16</lastmod>
+    <lastmod>2025-08-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://aksh-cloud.github.io/BlueChess.in/off-game.html</loc>
+    <lastmod>2025-08-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://aksh-cloud.github.io/BlueChess.in/online-game.html</loc>
+    <lastmod>2025-08-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
     <loc>https://aksh-cloud.github.io/BlueChess.in/profile.html</loc>
-    <lastmod>2025-08-16</lastmod>
+    <lastmod>2025-08-17</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.6</priority>
   </url>
-  
+
   <url>
-    <loc>https://aksh-cloud.github.io/BlueChess.in/shop.html</loc>
-    <lastmod>2025-08-16</lastmod>
-    <changefreq>weekly</changefreq>
+    <loc>https://aksh-cloud.github.io/BlueChess.in/signup.html</loc>
+    <lastmod>2025-08-17</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
 
