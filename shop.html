@@ -61,6 +61,13 @@ const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+const { data: settings } = await supabaseClient.from("settings").select("maintenance").single();
+if (settings.maintenance) {
+  window.location.href = "maintenance.html";
+  return;
+}
+
+
 const avatarFiles = ["car.jpg", "football.jpg", "mrbeast.jpg", "sword.webp", "minecraft.jpg"];
 
 const AVATAR_PRICES = {
@@ -189,4 +196,5 @@ async function buyAvatar(btn, fileName, price) {
 }
 
 loadShop();
+
 </script>
