@@ -103,6 +103,19 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUserId = null;
 
+    async function checkMaintenance() {
+  const { data, error } = await supabaseClient
+    .from("settings")
+    .select("maintenance, message")
+    .limit(1)
+    .single();
+
+  if (data?.maintenance) {
+    window.location.href = "maintenance.html";
+  }
+}
+checkMaintenance();
+
 // Load user
 (async function init() {
     const { data: { user } } = await supabaseClient.auth.getUser();
@@ -110,6 +123,11 @@ let currentUserId = null;
         window.location.href = "index.html";
         return;
     }
+    if (profile.banned) {
+  window.location.href = "banned.html";
+  return;
+}
+
     currentUserId = user.id;
     loadPlayers();
     listenForMatchUpdates();
@@ -249,4 +267,5 @@ async function declineChallenge(matchId) {
 
 </body>
 </html>
+
 
