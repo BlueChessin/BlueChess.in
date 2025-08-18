@@ -99,11 +99,19 @@
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const { data: settings } = await supabaseClient.from("settings").select("maintenance").single();
-    if (settings.maintenance) {
-      window.location.href = "maintenance.html";
-      return;
-    }
+    async function checkMaintenance() {
+  const { data, error } = await supabaseClient
+    .from("settings")
+    .select("maintenance, message")
+    .limit(1)
+    .single();
+
+  if (data?.maintenance) {
+    window.location.href = "maintenance.html";
+  }
+}
+checkMaintenance();
+
 
 
 
@@ -131,5 +139,6 @@
 </script>
 </body>
 </html>
+
 
 
