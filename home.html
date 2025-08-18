@@ -99,6 +99,13 @@
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    const { data: settings } = await supabaseClient.from("settings").select("maintenance").single();
+    if (settings.maintenance) {
+      window.location.href = "maintenance.html";
+      return;
+    }
+
+
 
     async function checkAuth() {
         const { data: { user } } = await supabaseClient.auth.getUser();
@@ -107,6 +114,11 @@
         } else {
             document.getElementById("username").textContent = user.user_metadata.username || user.email;
         }
+        if (profile.banned) {
+            window.location.href = "banned.html";
+            return;
+        }
+
     }
 
 
@@ -119,4 +131,5 @@
 </script>
 </body>
 </html>
+
 
