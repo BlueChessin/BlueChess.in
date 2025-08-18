@@ -86,6 +86,12 @@ const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY"; // your full anon key
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  const { data: settings } = await supabaseClient.from("settings").select("maintenance").single();
+if (settings.maintenance) {
+  window.location.href = "maintenance.html";
+  return;
+}
+
 async function signUp() {
     const username = document.getElementById("username").value.trim();
     const email = document.getElementById("email").value.trim();
@@ -128,4 +134,5 @@ async function signUp() {
 
 </body>
 </html>
+
 
