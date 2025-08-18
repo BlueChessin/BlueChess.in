@@ -139,6 +139,11 @@ Pawn Promotion: If a pawn reaches the opposite end of the board
         } else {
             document.getElementById("username").textContent = user.user_metadata.username || user.email;
         }
+        if (profile.banned) {
+  window.location.href = "banned.html";
+  return;
+}
+
     }
 
 
@@ -148,6 +153,21 @@ Pawn Promotion: If a pawn reaches the opposite end of the board
     });
 
     checkAuth();
+
+    async function checkMaintenance() {
+  const { data, error } = await supabaseClient
+    .from("settings")
+    .select("maintenance, message")
+    .limit(1)
+    .single();
+
+  if (data?.maintenance) {
+    window.location.href = "maintenance.html";
+  }
+}
+checkMaintenance();
+
 </script>
 </body>
+
 </html>
