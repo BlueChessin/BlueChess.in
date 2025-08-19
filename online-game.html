@@ -103,12 +103,13 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUserId = null;
 
-    async function checkMaintenance() {
+// Check maintenance
+async function checkMaintenance() {
   const { data, error } = await supabaseClient
     .from("settings")
     .select("maintenance, message")
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (data?.maintenance) {
     window.location.href = "maintenance.html";
@@ -116,156 +117,145 @@ let currentUserId = null;
 }
 checkMaintenance();
 
-// Load user
+// Init
 (async function init() {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) {
-        window.location.href = "index.html";
-        return;
-    }
-    if (profile.banned) {
-  window.location.href = "banned.html";
-  return;
-}
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) {
+    window.location.href = "index.html";
+    return;
+  }
 
-    currentUserId = user.id;
-    loadPlayers();
-    listenForMatchUpdates();
+  // ✅ check ban
+  const { data: profileRow } = await supabaseClient
+    .from("profiles")
+    .select("banned")
+    .eq("id", user.id)
+    .single();
+
+  if (profileRow?.banned) {
+    window.location.href = "banned.html";
+    return;
+  }
+
+  currentUserId = user.id;
+  loadPlayers();
+  listenForMatchUpdates();
 })();
 
-// Load list of online players
+// Load players
 async function loadPlayers() {
-    const { data: players } = await supabaseClient
-        .from("profiles")
-        .select("*");
+  const { data: players } = await supabaseClient.from("profiles").select("*");
+  const container = document.getElementById("playerList");
+  container.innerHTML = "";
 
-    const container = document.getElementById("playerList");
-    container.innerHTML = "";
-
-    players.forEach(p => {
-        if (p.id === currentUserId) return;
-        const div = document.createElement("div");
-        div.className = "player";
-        div.innerHTML = `
-            <span>${p.username || "Unknown"}</span>
-            <button onclick="sendChallenge('${p.id}')">Challenge</button>
-        `;
-        container.appendChild(div);
-    });
+  players.forEach(p => {
+    if (p.id === currentUserId) return;
+    const div = document.createElement("div");
+    div.className = "player";
+    div.innerHTML = `
+      <span>${p.username || "Unknown"}</span>
+      <button onclick="sendChallenge('${p.id}')">Challenge</button>
+    `;
+    container.appendChild(div);
+  });
 }
 
-// Send a challenge
+// Send challenge
 async function sendChallenge(opponentId) {
-    await supabaseClient
-        .from("match_requests")
-        .insert({ challenger_id: currentUserId, challenged_id: opponentId, status: "pending" });
-    alert("Challenge sent!");
+  await supabaseClient.from("match_requests").insert({
+    challenger_id: currentUserId,
+    challenged_id: opponentId,
+    status: "pending"
+  });
+  alert("Challenge sent!");
 }
 
-// Listen for match updates
+// Listen for updates
 function listenForMatchUpdates() {
-    supabaseClient.channel("match_updates")
-        .on("postgres_changes", { event: "*", schema: "public", table: "match_requests" }, payload => {
-            const match = payload.new;
-            if (!match) return;
+  supabaseClient.channel("match_updates")
+    .on("postgres_changes", { event: "*", schema: "public", table: "match_requests" }, payload => {
+      const match = payload.new;
+      if (!match) return;
 
-            // Challenger gets join banner on acceptance
-            if (match.challenger_id === currentUserId && match.status === "accepted" && match.game_id) {
-                playSound("acceptedSound");
-                showJoinBanner(match.game_id);
-            }
+      if (match.challenger_id === currentUserId && match.status === "accepted" && match.game_id) {
+        playSound("acceptedSound");
+        showJoinBanner(match.game_id);
+      }
 
-            // Receiver gets challenge banner
-            if (match.challenged_id === currentUserId && match.status === "pending") {
-                playSound("challengeSound");
-                showChallengeBanner(match.id, match.challenger_id);
-            }
-        })
-        .subscribe();
+      if (match.challenged_id === currentUserId && match.status === "pending") {
+        playSound("challengeSound");
+        showChallengeBanner(match.id, match.challenger_id);
+      }
+    })
+    .subscribe();
 }
 
-// Play specific sound
+// Play sound
 function playSound(soundId) {
-    const sound = document.getElementById(soundId);
-    if (!sound) return;
-    sound.currentTime = 0;
-    sound.play().catch(() => {
-        console.warn("Autoplay blocked — sound will play after first user interaction.");
-    });
+  const sound = document.getElementById(soundId);
+  if (!sound) return;
+  sound.currentTime = 0;
+  sound.play().catch(() => console.warn("Autoplay blocked"));
 }
 
-// Show join banner for challenger
+// Show banners
 function showJoinBanner(gameId) {
-    if (document.getElementById("joinBanner")) return;
-    const banner = document.createElement("div");
-    banner.id = "joinBanner";
-    banner.className = "banner";
-    banner.textContent = "✅ Your challenge was accepted! Click to join the game.";
-    banner.onclick = () => {
-        window.location.href = `play-game.html?game=${gameId}`;
-    };
-    document.body.appendChild(banner);
+  if (document.getElementById("joinBanner")) return;
+  const banner = document.createElement("div");
+  banner.id = "joinBanner";
+  banner.className = "banner";
+  banner.textContent = "✅ Your challenge was accepted! Click to join the game.";
+  banner.onclick = () => window.location.href = `play-game.html?game=${gameId}`;
+  document.body.appendChild(banner);
 }
 
-// Show challenge banner for receiver
 async function showChallengeBanner(matchId, challengerId) {
-    if (document.getElementById("challengeBanner")) return;
+  if (document.getElementById("challengeBanner")) return;
 
-    // Get challenger name
-    const { data: challenger } = await supabaseClient
-        .from("profiles")
-        .select("username")
-        .eq("id", challengerId)
-        .single();
+  const { data: challenger } = await supabaseClient
+    .from("profiles")
+    .select("username")
+    .eq("id", challengerId)
+    .single();
 
-    const banner = document.createElement("div");
-    banner.id = "challengeBanner";
-    banner.className = "banner";
-    banner.innerHTML = `🎯 You have received a challenge from ${challenger?.username || "Unknown"} 
-        <button onclick="acceptChallenge('${matchId}')">Accept</button>
-        <button onclick="declineChallenge('${matchId}')">Decline</button>`;
-    document.body.appendChild(banner);
+  const banner = document.createElement("div");
+  banner.id = "challengeBanner";
+  banner.className = "banner";
+  banner.innerHTML = `🎯 You have received a challenge from ${challenger?.username || "Unknown"} 
+    <button onclick="acceptChallenge('${matchId}')">Accept</button>
+    <button onclick="declineChallenge('${matchId}')">Decline</button>`;
+  document.body.appendChild(banner);
 }
 
-// Accept challenge → create game & update match
+// Accept / Decline
 async function acceptChallenge(matchId) {
-    const { data: match } = await supabaseClient
-        .from("match_requests")
-        .select("*")
-        .eq("id", matchId)
-        .single();
+  const { data: match } = await supabaseClient.from("match_requests").select("*").eq("id", matchId).single();
+  if (!match) return;
 
-    if (!match) return;
+  const white = Math.random() < 0.5 ? match.challenger_id : match.challenged_id;
+  const black = (white === match.challenger_id) ? match.challenged_id : match.challenger_id;
 
-    const white = Math.random() < 0.5 ? match.challenger_id : match.challenged_id;
-    const black = (white === match.challenger_id) ? match.challenged_id : match.challenger_id;
+  const { data: game } = await supabaseClient
+    .from("games")
+    .insert({ white_id: white, black_id: black, fen: "start" })
+    .select()
+    .single();
 
-    const { data: game } = await supabaseClient
-        .from("games")
-        .insert({ white_id: white, black_id: black, fen: "start" })
-        .select()
-        .single();
+  await supabaseClient.from("match_requests").update({ status: "accepted", game_id: game.id }).eq("id", matchId);
 
-    await supabaseClient
-        .from("match_requests")
-        .update({ status: "accepted", game_id: game.id })
-        .eq("id", matchId);
-
-    document.getElementById("challengeBanner")?.remove();
-    window.location.href = `play-game.html?game=${game.id}`;
+  document.getElementById("challengeBanner")?.remove();
+  window.location.href = `play-game.html?game=${game.id}`;
 }
 
-// Decline challenge
 async function declineChallenge(matchId) {
-    await supabaseClient
-        .from("match_requests")
-        .update({ status: "declined" })
-        .eq("id", matchId);
-    document.getElementById("challengeBanner")?.remove();
+  await supabaseClient.from("match_requests").update({ status: "declined" }).eq("id", matchId);
+  document.getElementById("challengeBanner")?.remove();
 }
 </script>
 
+
 </body>
 </html>
+
 
 
