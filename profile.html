@@ -137,38 +137,41 @@
     </div>
 </div>
 
-<script>
+<script type="module">
 const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-
-    const { data: settings } = await supabaseClient.from("settings").select("maintenance").single();
-if (settings.maintenance) {
-  window.location.href = "maintenance.html";
-  return;
-}
-
 async function loadProfile() {
+    // 🔹 Check maintenance first
+    const { data: settings } = await supabaseClient.from("settings").select("maintenance").single();
+    if (settings?.maintenance) {
+        window.location.href = "maintenance.html";
+        return;
+    }
+
+    // 🔹 Get logged-in user
     const { data: { user }, error } = await supabaseClient.auth.getUser();
     if (error || !user) {
         window.location.href = "index.html";
-        
         return;
     }
-    if (profile.banned) {
-  window.location.href = "banned.html";
-  return;
-}
 
-
+    // 🔹 Fetch profile
     const { data: profileRow, error: profileError } = await supabaseClient
         .from("profiles")
-        .select("username, profile, owner, dev, admin, coadmin, elo, blue_rooks")
+        .select("username, profile, owner, dev, admin, coadmin, elo, blue_rooks, banned")
         .eq("id", user.id)
         .single();
 
-    document.getElementById("blueRooks").innerHTML = `<img src="files/img/blue-rook.png" style="height:30px; vertical-align:middle; margin-right:5px;"> ${profileRow?.blue_rooks ?? 0}`;
+    if (profileRow?.banned) {
+        window.location.href = "banned.html";
+        return;
+    }
+
+    // Blue rooks count
+    document.getElementById("blueRooks").innerHTML =
+      `<img src="files/img/blue-rook.png" style="height:30px; vertical-align:middle; margin-right:5px;"> ${profileRow?.blue_rooks ?? 0}`;
 
     if (profileError || !profileRow) {
         document.getElementById("username").textContent = "Unknown User";
@@ -183,13 +186,11 @@ async function loadProfile() {
 
     const badgesDiv = document.createElement("span");
     badgesDiv.classList.add("badges");
-
     const badgeFolder = "files/img/badges/";
     if (profileRow.owner) badgesDiv.innerHTML += `<img src="${badgeFolder}owner.png">`;
     if (profileRow.dev) badgesDiv.innerHTML += `<img src="${badgeFolder}dev.png">`;
     if (profileRow.admin) badgesDiv.innerHTML += `<img src="${badgeFolder}admin.png">`;
     if (profileRow.coadmin) badgesDiv.innerHTML += `<img src="${badgeFolder}coadmin.png">`;
-
     usernameEl.appendChild(badgesDiv);
 
     // Email
@@ -198,27 +199,22 @@ async function loadProfile() {
     // ELO
     document.getElementById("elo").textContent = "ELO: " + (profileRow.elo ?? 1200);
 
-    // Load owned avatars
-    const { data: ownedAvatars, error: ownedError } = await supabaseClient
+    // 🔹 Load owned avatars
+    const { data: ownedAvatars } = await supabaseClient
         .from("owned_avatars")
         .select("avatar_path")
         .eq("user_id", user.id);
 
     const avatarSelect = document.getElementById("avatarSelect");
-    avatarSelect.innerHTML = "";
+    avatarSelect.innerHTML = `<option value="">Default</option>`; // always default
 
-    // Always add default avatar
-    avatarSelect.innerHTML += `<option value="">Default</option>`;
-
-    // If owner, add bluechess.in.png as a special option
     if (profileRow.owner) {
         avatarSelect.innerHTML += `<option value="bluechess.in.png">BlueChess.in (Owner)</option>`;
     }
 
-    if (ownedAvatars && ownedAvatars.length > 0) {
+    if (ownedAvatars?.length > 0) {
         ownedAvatars.forEach(a => {
             const fileName = a.avatar_path.split("/").pop();
-            // Avoid duplicate if owner avatar is already in owned avatars
             if (!(profileRow.owner && fileName === "bluechess.in.png")) {
                 avatarSelect.innerHTML += `<option value="${a.avatar_path}">${fileName}</option>`;
             }
@@ -247,18 +243,12 @@ async function loadProfile() {
         }
         document.getElementById("profilePic").src = newUrl;
 
-        // Update profile in DB
-        const { error: updateError } = await supabaseClient
+        await supabaseClient
             .from("profiles")
             .update({ profile: newPath || null })
             .eq("id", user.id);
-        if (updateError) {
-            alert("Failed to update profile picture!");
-        }
     };
 }
 
 loadProfile();
-
 </script>
-
