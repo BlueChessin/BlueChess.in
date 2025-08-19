@@ -122,10 +122,11 @@ checkMaintenance();
         } else {
             document.getElementById("username").textContent = user.user_metadata.username || user.email;
         }
-        if (profile.banned) {
-            window.location.href = "banned.html";
-            return;
+        if (profileRow?.banned) {
+           window.location.href = "banned.html";
+           return;
         }
+
 
     }
 
@@ -139,6 +140,7 @@ checkMaintenance();
 </script>
 </body>
 </html>
+
 
 
 
