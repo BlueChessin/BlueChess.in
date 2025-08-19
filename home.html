@@ -93,53 +93,62 @@
 </div>
 
 <script>
+const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
-
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    async function checkMaintenance() {
-  const { data, error } = await supabaseClient
+async function checkAuth() {
+  // 1. Check maintenance mode
+  const { data: settings, error: settingsError } = await supabaseClient
     .from("settings")
     .select("maintenance, message")
     .limit(1)
+    .maybeSingle();
+
+  if (settingsError) {
+    console.error("Error loading settings:", settingsError.message);
+  }
+
+  if (settings?.maintenance) {
+    window.location.href = "maintenance.html";
+    return;
+  }
+
+  // 2. Check auth
+  const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+  if (authError || !user) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  // 3. Fetch profile
+  const { data: profileRow, error: profileError } = await supabaseClient
+    .from("profiles")
+    .select("username, banned")
+    .eq("id", user.id)
     .single();
 
-  if (data?.maintenance) {
-    window.location.href = "maintenance.html";
+  if (profileError) {
+    console.error("Error fetching profile:", profileError.message);
   }
+
+  if (profileRow?.banned) {
+    window.location.href = "banned.html";
+    return;
+  }
+
+  // ✅ If everything fine → show username somewhere
+  document.getElementById("welcomeText").textContent =
+    "Welcome, " + (profileRow?.username || user.email);
 }
-checkMaintenance();
 
-
-
-
-    async function checkAuth() {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        if (!user) {
-            window.location.href = "index.html";
-        } else {
-            document.getElementById("username").textContent = user.user_metadata.username || user.email;
-        }
-        if (profileRow?.banned) {
-           window.location.href = "banned.html";
-           return;
-        }
-
-
-    }
-
-
-    document.getElementById("logoutBtn").addEventListener("click", async () => {
-        await supabaseClient.auth.signOut();
-        window.location.href = "index.html";
-    });
-
-    checkAuth();
+// Run on page load
+checkAuth();
 </script>
+
 </body>
 </html>
+
 
 
 
