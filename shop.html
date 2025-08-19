@@ -61,34 +61,45 @@ const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// 🔧 Check maintenance mode
-const { data: settings } = await supabaseClient.from("settings").select("maintenance").single();
-if (settings?.maintenance) {
-  window.location.href = "maintenance.html";
-}
+async function checkMaintenance() {
+  const { data, error } = await supabaseClient
+    .from("settings")
+    .select("maintenance, message")
+    .limit(1)
+    .single();
 
-// ---------------- SHOP ----------------
+  if (data?.maintenance) {
+    window.location.href = "maintenance.html";
+  }
+}
+checkMaintenance();
+
+// Load shop
 async function loadShop() {
   console.log("Loading shop...");
+
+  // Auth check
   const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
   if (userError || !user) {
+    console.error("User error:", userError);
     alert("Login required");
     window.location.href = "index.html";
     return;
   }
 
-  // Owned avatars
-  const { data: owned } = await supabaseClient
+  // Get owned avatars
+  const { data: owned, error: ownedError } = await supabaseClient
     .from("owned_avatars")
     .select("avatar_path")
     .eq("user_id", user.id);
+
   const ownedSet = new Set((owned || []).map(a => a.avatar_path));
 
-  // Shop items from DB
+  // Fetch shop items
   const { data: shopItems, error: shopError } = await supabaseClient
     .from("shop_items")
-    .select("*")
-    .order("created_at");
+    .select("id, file_name, price, category");
+
   if (shopError) {
     console.error("Shop load error:", shopError);
     return;
@@ -106,6 +117,7 @@ async function loadShop() {
     div.innerHTML = `
       <img src="${publicUrl}" alt="${item.file_name}">
       <div class="price">${item.price} <img src="files/img/-s-blue-rook.png" height="16"></div>
+      <div class="category">Category: ${item.category}</div>
       <button ${alreadyOwned ? "disabled" : ""} 
         onclick="buyAvatar('${item.file_name}', ${item.price}, this)">
         ${alreadyOwned ? "Owned" : "Buy"}
@@ -115,17 +127,29 @@ async function loadShop() {
   });
 }
 
-// Buy function
 window.buyAvatar = async function(fileName, price, btn) {
   btn.disabled = true;
-  const { data: { user } } = await supabaseClient.auth.getUser();
+  console.log(`Buying avatar: ${fileName} for ${price}`);
+
+  const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+  if (userError || !user) {
+    alert("Login required");
+    window.location.href = "index.html";
+    return;
+  }
 
   // Get balance
-  const { data: profile } = await supabaseClient
+  const { data: profile, error: profileError } = await supabaseClient
     .from("profiles")
     .select("blue_rooks")
     .eq("id", user.id)
     .single();
+
+  if (profileError || !profile) {
+    alert("Profile error");
+    btn.disabled = false;
+    return;
+  }
 
   if ((profile.blue_rooks ?? 0) < price) {
     alert("Not enough Blue Rooks!");
@@ -133,43 +157,35 @@ window.buyAvatar = async function(fileName, price, btn) {
     return;
   }
 
-  // Already owned check
-  const { data: owned } = await supabaseClient
-    .from("owned_avatars")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("avatar_path", `buyable/${fileName}`)
-    .maybeSingle();
-  if (owned) {
-    alert("You already own this avatar.");
-    btn.disabled = false;
-    return;
-  }
-
-  // Deduct balance + add ownership
-  const { error: updateErr } = await supabaseClient
+  // Deduct and add avatar
+  const updateRes = await supabaseClient
     .from("profiles")
     .update({ blue_rooks: profile.blue_rooks - price })
     .eq("id", user.id);
-  if (updateErr) {
-    alert("Error updating balance.");
+
+  if (updateRes.error) {
+    alert("Failed to update balance.");
     btn.disabled = false;
     return;
   }
 
-  const { error: insertErr } = await supabaseClient
+  const insertRes = await supabaseClient
     .from("owned_avatars")
     .insert({ user_id: user.id, avatar_path: `buyable/${fileName}` });
-  if (insertErr) {
-    alert("Error adding avatar.");
+
+  if (insertRes.error) {
+    alert("Failed to add avatar.");
     btn.disabled = false;
     return;
   }
 
   alert("Avatar purchased!");
-  loadShop();
+  await loadShop();
 };
 
+// Run shop on page load
 loadShop();
 </script>
+
+
 
