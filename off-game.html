@@ -8,33 +8,48 @@
 <link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="chessboard.js/chessboard.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="chess.js/chess.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/particles.js"></script>
 <style>
     body {
         margin: 0;
-        font-family: Arial, sans-serif;
-        background-color: #e9f4ff;
-        color: #333;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        background: #0b1f3a;
+        color: white;
+        overflow: hidden;
+    }
+    #particles-js {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        top: 0;
+        left: 0;
     }
     .container {
         display: flex;
         height: 100vh;
+        position: relative;
+        z-index: 1;
     }
     .sidebar {
-        width: 250px;
-        background-color: #004890;
+        width: 260px;
+        background: rgba(0, 13, 65, 0.353);
         color: white;
         display: flex;
         flex-direction: column;
         padding: 20px;
+        box-shadow: 0 0 20px rgba(0, 183, 255, 0.6);
     }
     .sidebar h2 {
         text-align: center;
         margin-bottom: 20px;
-        font-size: 1.4em;
+        font-size: 1.5em;
+        text-shadow: 0 0 8px cyan;
     }
     .player {
-        background: rgba(255,255,255,0.15);
+        background: rgba(255,255,255,0.1);
         padding: 10px;
         border-radius: 8px;
         margin-bottom: 15px;
@@ -51,17 +66,18 @@
     .board-container {
         background: white;
         padding: 15px;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        border-radius: 12px;
+        box-shadow: 0 0 25px rgba(0, 183, 255, 0.4);
     }
     #board {
         width: min(90vw, 500px);
     }
     .moves {
-        background: white;
+        background: rgba(255,255,255,0.95);
+        color: black;
         padding: 15px;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        border-radius: 12px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.3);
         width: 200px;
         overflow-y: auto;
         max-height: 500px;
@@ -74,22 +90,26 @@
         transform: translate(-50%, -50%);
         background: white;
         padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0,183,255,0.6);
         z-index: 999;
         text-align: center;
+        color: black;
+        font-size: 1.1em;
     }
     .promotion-popup img {
         width: 60px;
         margin: 5px;
         cursor: pointer;
+        transition: transform 0.2s ease;
     }
-    /* Selected piece highlight */
+    .promotion-popup img:hover {
+        transform: scale(1.2);
+    }
+    /* Highlight */
     .highlight-square {
         background-color: rgba(255, 255, 0, 0.5) !important;
     }
-
-    /* Possible move indicator */
     .possible-move {
         position: relative;
     }
@@ -97,7 +117,7 @@
         content: "";
         width: 50%;
         height: 50%;
-        background: rgba(0, 162, 255, 0.6);
+        background: rgba(0, 183, 255, 0.7);
         border-radius: 50%;
         position: absolute;
         top: 25%;
@@ -108,32 +128,77 @@
     }
     .controls button {
         width: 100%;
-        padding: 10px;
-        margin-top: 10px;
+        padding: 12px;
+        margin-top: 12px;
         font-size: 1em;
         border: none;
-        border-radius: 5px;
+        border-radius: 6px;
         cursor: pointer;
+        transition: all 0.25s ease;
+        font-weight: bold;
     }
+    .go-home { background: #285fa7; color: white; }
     .resign { background: #ff4d4d; color: white; }
     .draw { background: #ffc107; color: white; }
     .restart { background: #28a745; color: white; }
-    .go-home { background: #285fa7; color: white; }
+    .controls button:hover {
+        box-shadow: 0 0 15px rgba(0,183,255,0.7);
+        transform: scale(1.05);
+    }
+    .logo {
+        width: 200px;
+        margin: 0 auto 20px;
+        display: block;
+    }
+    /* Banners */
+  .banner {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 14px 22px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    cursor: pointer;
+    z-index: 9999;
+    animation: floatIn 0.4s ease-out;
+  }
+  @keyframes floatIn {
+    from { opacity: 0; transform: translate(-50%, 20px); }
+    to   { opacity: 1; transform: translate(-50%, 0); }
+  }
+  #joinBanner { background: #28a745; color: white; }
+  #challengeBanner { background: #ffc107; color: black; cursor: default; }
+  .banner button {
+    margin-left: 8px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .banner #green { background: #28a745; color: white; }
+  .banner #red { background: #ff4d4d; color: white; }
 </style>
 </head>
 <body>
 
+<div id="particles-js"></div>
+
 <div class="container">
     <!-- Sidebar -->
     <div class="sidebar">
-        <h2>Blue Chess.in</h2>
+        
+        <img src="files/img/-w-logo.png" alt="Blue Chess.in" class="logo">
         <div class="player">White: <span id="whitePlayer">You</span></div>
         <div class="player">Black: <span id="blackPlayer">Opponent</span></div>
         <div class="controls">
-            <button class="go-home" onclick="window.location.href = 'home.html';">Go Home</button>
-            <button class="resign" onclick="resign()">Resign</button>
-            <button class="draw" onclick="offerDraw()">Offer Draw</button>
-            <button class="restart" onclick="restartGame()">Restart</button>
+            <button class="go-home" onclick="window.location.href = 'home.html';">🏠 Go Home</button>
+            <button class="resign" onclick="resign()">✖ Resign</button>
+            <button class="draw" onclick="offerDraw()">🤝 Offer Draw</button>
+            <button class="restart" onclick="restartGame()">🔄 Restart</button>
         </div>
     </div>
 
@@ -143,7 +208,7 @@
             <div id="board"></div>
         </div>
         <div class="moves">
-            <h3>Moves</h3>
+            <h3>📜 Moves</h3>
             <ol id="moveList"></ol>
         </div>
     </div>
@@ -155,7 +220,42 @@
     <div id="promotionChoices"></div>
 </div>
 
+<audio id="challengeSound" src="files/sound/challenge.wav" preload="auto"></audio>
+<audio id="acceptedSound" src="files/sound/accepted.wav" preload="auto"></audio>
+
 <script>
+    const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  async function checkAuth() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+      window.location.href = "index.html";
+      return;
+    }
+    currentUserId = user.id;
+
+    // Banned check
+    const { data: profile } = await supabaseClient.from("profiles").select("banned").eq("id", user.id).single();
+    if (profile && profile.banned) {
+      window.location.href = "banned.html";
+      return;
+    }
+
+    // Maintenance check
+    const { data: settings } = await supabaseClient.from("settings").select("maintenance").limit(1).single();
+    if (settings && settings.maintenance) {
+      window.location.href = "maintenance.html";
+      return;
+    }
+  }
+
+
+
+    checkAuth();
+    listenForMatchUpdates();
+
     let game = new Chess();
     let selectedSquare = null;
 
@@ -201,7 +301,6 @@
             }
         } else {
             if (square === selectedSquare) {
-                // Deselect if same square clicked
                 selectedSquare = null;
                 clearHighlights();
                 return;
@@ -269,14 +368,14 @@
     });
 
     function resign() {
-        alert("You resigned! Bot wins!");
+        alert("You resigned! Opponent wins!");
         game.reset();
         board.start();
         updateMoveList();
     }
 
     function offerDraw() {
-        alert("Draw offered! Bot is thinking...");
+        alert("Draw offered!");
     }
 
     function restartGame() {
@@ -285,4 +384,110 @@
         updateMoveList();
     }
 
+    // Real-time challenge listener
+  function listenForMatchUpdates() {
+  supabaseClient.channel("match_updates")
+    .on("postgres_changes", { event: "*", schema: "public", table: "match_requests" }, payload => {
+      const match = payload.new;
+      if (!match) return;
+
+      if (match.challenger_id === currentUserId && match.status === "accepted" && match.game_id) {
+        playSound("acceptedSound");
+        showJoinBanner(match.game_id);
+      }
+
+      if (match.challenged_id === currentUserId && match.status === "pending") {
+        playSound("challengeSound");
+        showChallengeBanner(match.id, match.challenger_id);
+      }
+    })
+    .subscribe();
+}
+
+function playSound(soundId) {
+  const sound = document.getElementById(soundId);
+  if (!sound) return;
+  sound.currentTime = 0;
+  sound.play().catch(() => {});
+}
+
+function showJoinBanner(gameId) {
+  if (document.getElementById("joinBanner")) return;
+  const banner = document.createElement("div");
+  banner.id = "joinBanner";
+  banner.className = "banner";
+  banner.textContent = "✅ Your challenge was accepted! Click to join the game.";
+  banner.onclick = () => {
+    window.location.href = `play-game.html?game=${gameId}`;
+  };
+  document.body.appendChild(banner);
+}
+
+async function showChallengeBanner(matchId, challengerId) {
+  if (document.getElementById("challengeBanner")) return;
+  const { data: challenger } = await supabaseClient
+    .from("profiles")
+    .select("username")
+    .eq("id", challengerId)
+    .single();
+
+  const banner = document.createElement("div");
+  banner.id = "challengeBanner";
+  banner.className = "banner";
+  banner.innerHTML = `🎯 Challenge from <b>${challenger?.username || "Unknown"}</b> 
+    <button onclick="acceptChallenge('${matchId}')" id="green">Accept</button>
+    <button onclick="declineChallenge('${matchId}')" id="red">Decline</button>`;
+  document.body.appendChild(banner);
+}
+
+async function acceptChallenge(matchId) {
+  const { data: match } = await supabaseClient
+    .from("match_requests")
+    .select("*")
+    .eq("id", matchId)
+    .single();
+  if (!match) return;
+
+  const white = Math.random() < 0.5 ? match.challenger_id : match.challenged_id;
+  const black = (white === match.challenger_id) ? match.challenged_id : match.challenger_id;
+
+  const { data: game } = await supabaseClient
+    .from("games")
+    .insert({ white_id: white, black_id: black, fen: "start" })
+    .select()
+    .single();
+
+  await supabaseClient
+    .from("match_requests")
+    .update({ status: "accepted", game_id: game.id })
+    .eq("id", matchId);
+
+  document.getElementById("challengeBanner")?.remove();
+  window.location.href = `play-game.html?game=${game.id}`;
+}
+
+async function declineChallenge(matchId) {
+  await supabaseClient
+    .from("match_requests")
+    .update({ status: "declined" })
+    .eq("id", matchId);
+  document.getElementById("challengeBanner")?.remove();
+}
+
+    /* Particles.js config */
+    particlesJS("particles-js", {
+        particles: {
+            number: { value: 80, density: { enable: true, value_area: 800 }},
+            color: { value: "#00b7ff" },
+            shape: { type: "circle" },
+            opacity: { value: 0.6, random: true },
+            size: { value: 4.5, random: true },
+            move: { enable: true, speed: 2 }
+        },
+        interactivity: {
+            events: { onhover: { enable: true, mode: "repulse" } }
+        }
+    });
 </script>
+</body>
+</html>
