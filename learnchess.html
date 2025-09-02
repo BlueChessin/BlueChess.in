@@ -5,169 +5,222 @@
     <title>Blue Chess.in - Learn Chess</title>
     <link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background-color: #ffffff;
-        }
-        .container {
-            display: flex;
-            height: 100vh;
-        }
-        .sidebar {
-            width: 250px;
-            background-color: #0069d2;
-            color: white;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-        .sidebar h1 {
-            font-size: 1.5em;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .menu {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        .menu button {
-            background-color: white;
-            color: #0055a9;
-            border: none;
-            padding: 10px;
-            font-size: 1em;
-            cursor: pointer;
-            border-radius: 5px;
-            text-align: left;
-        }
-        .menu button:hover {
-            background-color: #ddd;
-        }
-        .main {
-            flex: 1;
-            padding: 20px;
-            background-color: white;
-        }
-        .main h2 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .logo {
-            width: 250px;
-            margin: 0 auto 20px;
-            display: block;
-        }
-        .text {
-    font-size: 1.15em;
-    line-height: 1.7;
-    color: #0e1c2e;
-    background: #d8ecff;
-    border-radius: 12px;
-    padding: 24px 32px;
-    box-shadow: 0 2px 12px rgba(0,105,210,0.08);
-    margin: 0 auto 24px auto;
-    max-width: 800px;
-    white-space: pre-wrap;
-    font-family: 'Segoe UI', 'Arial', sans-serif;
-}
-    </style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(120deg,#02122a,#0f2b55);
+      color: #fff;
+      overflow: hidden;
+    }
+    #particles-js {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      top: 0;
+      left: 0;
+    }
+    .container {
+      display: flex;
+      height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+    .sidebar {
+      width: 250px;
+      background: rgba(0,0,0,.25);
+      color: white;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 0 20px rgba(74,163,255,0.6), 0 0 40px rgba(74,163,255,0.3);
+      animation: sidebarGlow 3s infinite alternate;
+    }
+    @keyframes sidebarGlow {
+      from { box-shadow: 0 0 20px rgba(74,163,255,0.6), 0 0 40px rgba(74,163,255,0.3); }
+      to   { box-shadow: 0 0 30px rgba(74,163,255,1), 0 0 60px rgba(74,163,255,0.6); }
+    }
+    .sidebar h1 {
+      font-size: 1.5em;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .logo {
+      width: 200px;
+      margin: 0 auto 20px;
+      display: block;
+    }
+    .menu {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .menu button {
+      background-color: rgba(255,255,255,.1);
+      color: #fff;
+      border: none;
+      padding: 12px;
+      font-size: 1em;
+      cursor: pointer;
+      border-radius: 8px;
+      text-align: left;
+      transition: background 0.3s, transform 0.2s;
+    }
+    .menu button:hover {
+      background-color: rgba(74,163,255,.9);
+      color: #00122e;
+      transform: translateX(5px);
+    }
+    .main {
+      flex: 1;
+      padding: 20px;
+      background: rgba(255,255,255,.06);
+      border-radius: 14px;
+      margin: 20px;
+      box-shadow: 0 0 25px rgba(255,255,255,.15);
+      text-align: center;
+    }
+    .main h2 {
+      margin-bottom: 20px;
+    }
+    .chessboard-img {
+      display: block;
+      margin: 0 auto;
+      max-width: 600px;
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 0 30px rgba(74,163,255,0.6);
+    }
+    pre.text {
+      text-align: left;
+      background: rgba(0,0,0,.2);
+      padding: 15px;
+      border-radius: 10px;
+      overflow-x: auto;
+      box-shadow: 0 0 15px rgba(74,163,255,0.4);
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        font-size: 18px;
+        max-height: 70vh;
+        margin-top: 20px;
+        border: 1px solid rgba(255,255,255,0.1);
+        background-color: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        color: #ffffff;
+    }
+    h2 {
+      margin: 0 0 15px 0;
+    }
+  </style>
 </head>
 <body>
     <div class="container">
-    <!-- Sidebar -->
     <div class="sidebar">
-        <a href="home.html"><img src="files/img/-w-logo.png" alt="Blue Chess.in" class="logo"></a>
-        <div class="menu">
-            <button onclick="window.location.href='profile.html'" id="profileBtn">Profile (<span id="username">Loading...</span>)</button>
-            <button onclick="location.href='bots.html'">🤖 Play Bot!</button>
-            <button onclick="window.location.href='off-game.html'">🏁 Play Offline</button>
-            <button onclick="window.location.href='online-game.html'" >♕ Online Play</button>
-            <button onclick="window.location.href='shop.html'" >🛒 The Shop</button>
-            <button onclick="window.location.href='learnchess.html'"> ? How to Play</button>
-            <button id="logoutBtn">Logout</button>
-        </div>
+    <img src="files/img/-w-logo.png" alt="Blue Chess.in" class="logo">
+    <div class="menu">
+      <button onclick="window.location.href='profile.html'" id="profileBtn">Profile (<span id="username">Loading...</span>)</button>
+      <button onclick="window.location.href='home.html'">🏠 Home</button>
+      <button onclick="location.href='bots.html'">🤖 Play Bot!</button>
+      <button onclick="window.location.href='off-game.html'">🏁 Play Offline</button>
+      <button onclick="window.location.href='online-game.html'">♕ Online Play</button>
+      <button onclick="window.location.href='shop.html'">🛒 The Shop</button>
+      <button id="logoutBtn">🚪 Logout</button>
     </div>
+  </div>
 
     <!-- Main Content -->
     <div class="main">
         <h2>Learn Hown To Play Chess against bots and friends!</h2>
         <pre class="text">
-            In chess, the objective is to checkmate the opponent's king,
-     meaning putting it under attack with no legal moves to escape capture. Each player controls 16 pieces with unique movement patterns, including pawns, rooks, bishops, knights, a queen, and a king. Players take turns moving one piece per turn, with white moving first. 
+    In chess, the objective is to checkmate the opponent's king,
+meaning putting it under attack with no legal moves to escape capture. Each player controls 16 pieces with unique movement patterns, including pawns, rooks, bishops, knights, a queen, and a king. Players take turns moving one piece per turn, with white moving first. 
 Here's a breakdown of the basic rules:
-1. Objective: Checkmate the opponent's king.
-2. Setup: The board has 64 squares, with a light square on the bottom right for each player. 
-Pieces are arranged in a specific order at the start of the game.
-3. Turns: Players alternate turns moving one piece per turn, with white moving first.
-4. Movement: Each piece has specific movement rules. 
-King: Moves one square in any direction. 
-Rook: Moves any number of squares horizontally or vertically. 
-Bishop: Moves any number of squares diagonally. 
-Queen: Moves any number of squares in any direction. 
-Knight: Moves in an L-shape (two squares in one direction, then one square perpendicularly). 
-It's the only piece that can jump over other pieces. 
-Pawn: Moves one square forward, or two squares on its first move. It captures diagonally one square forward. 
-5. Capturing: A piece is captured when an opponent's piece moves to its square.
-6. Check: If a king is under attack, it's in check.
- The player must move the king out of check, block the attack, or capture the attacking piece.
-7. Checkmate: If a king is in check and has no legal moves to escape, it's checkmate, and the game ends.
-8. Draw: A game can end in a draw (stalemate) if a player has no legal moves but their king is not in check. 
-9. Special Moves:
-Castling: A special move involving the king and a rook
-, but it has specific rules about previous moves and being in or moving through check. 
-En Passant: A special pawn capture. 
-Pawn Promotion: If a pawn reaches the opposite end of the board
-, it can be promoted to any other piece (except a king). 
+    1. Objective: Checkmate the opponent's king.
+    2. Setup: The board has 64 squares, with a light square on the bottom right for each player. 
+        Pieces are arranged in a specific order at the start of the game.
+    3. Turns: Players alternate turns moving one piece per turn, with white moving first.
+    4. Movement: Each piece has specific movement rules. 
+        King: Moves one square in any direction. 
+        Rook: Moves any number of squares horizontally or vertically. 
+        Bishop: Moves any number of squares diagonally. 
+        Queen: Moves any number of squares in any direction. 
+        Knight: Moves in an L-shape (two squares in one direction, then one square perpendicularly). 
+        It's the only piece that can jump over other pieces. 
+        Pawn: Moves one square forward, or two squares on its first move. It captures diagonally one square forward. 
+    5. Capturing: A piece is captured when an opponent's piece moves to its square.
+    6. Check: If a king is under attack, it's in check.
+        The player must move the king out of check, block the attack, or capture the attacking piece.
+    7. Checkmate: If a king is in check and has no legal moves to escape, it's checkmate, and the game ends.
+    8. Draw: A game can end in a draw (stalemate) if a player has no legal moves but their king is not in check. 
+    9. Special Moves:
+        Castling: A special move involving the king and a rook
+            , but it has specific rules about previous moves and being in or moving through check. 
+        En Passant: A special pawn capture. 
+        Pawn Promotion: If a pawn reaches the opposite end of the board
+            , it can be promoted to any other piece (except a king). 
         </pre>
-    </div>
+    </div> 
 </div>
 <script>
-    const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
+  const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  async function checkAuth() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+      window.location.href = "index.html";
+      return;
+    }
+    document.getElementById("username").textContent = user.user_metadata.username || user.email;
 
-
-    async function checkAuth() {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        if (!user) {
-            window.location.href = "index.html";
-        } else {
-            document.getElementById("username").textContent = user.user_metadata.username || user.email;
-        }
-        if (profile.banned) {
-  window.location.href = "banned.html";
-  return;
-}
-
+    // Banned check
+    const { data: profile } = await supabaseClient.from("profiles").select("banned").eq("id", user.id).single();
+    if (profile && profile.banned) {
+      window.location.href = "banned.html";
+      return;
     }
 
-
-    document.getElementById("logoutBtn").addEventListener("click", async () => {
-        await supabaseClient.auth.signOut();
-        window.location.href = "index.html";
-    });
-
-    checkAuth();
-
-    async function checkMaintenance() {
-  const { data, error } = await supabaseClient
-    .from("settings")
-    .select("maintenance, message")
-    .limit(1)
-    .single();
-
-  if (data?.maintenance) {
-    window.location.href = "maintenance.html";
+    // Maintenance check
+    const { data: settings } = await supabaseClient.from("settings").select("maintenance").limit(1).single();
+    if (settings && settings.maintenance) {
+      window.location.href = "maintenance.html";
+      return;
+    }
   }
-}
-checkMaintenance();
 
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    await supabaseClient.auth.signOut();
+    window.location.href = "index.html";
+  });
+
+  checkAuth();
+
+  // Particles.js config
+  particlesJS("particles-js", {
+    particles: {
+      number: { value: 80, density: { enable: true, value_area: 800 } },
+      color: { value: "#4aa3ff" },
+      shape: { type: "circle" },
+      opacity: { value: 0.5 },
+      size: { value: 3 },
+      line_linked: { enable: true, distance: 150, color: "#4aa3ff", opacity: 0.4, width: 1 },
+      move: { enable: true, speed: 2 }
+    },
+    interactivity: {
+      detect_on: "canvas",
+      events: { onhover: { enable: true, mode: "repulse" } }
+    },
+    retina_detect: true
+  });
 </script>
 </body>
-
 </html>
