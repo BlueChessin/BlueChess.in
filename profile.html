@@ -6,249 +6,398 @@
 <meta name="description" content="View and customize your Blue Chess.in profile. Check your username, ELO rating, badges, and avatar.">
 <link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 <style>
-    body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background-color: #88c6ff;
+  :root {
+    --bg:#0b1f3a;
+    --panel:#0f2b55;
+    --muted:#aac7ff;
+    --brand:#4aa3ff;
+    --danger:#ff4d4d;
+    --ok:#22c55e;
+    --text:#e6f0ff;
+    --shadow:rgba(74,163,255,.6);
+  }
+  body {
+    margin: 0;
+    font-family: Inter, sans-serif;
+    background: linear-gradient(120deg,#02122a,#0f2b55);
+    color: var(--text);
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  #particles-js {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      top: 0;
+      left: 0;
     }
-    .container {
-        display: flex;
-        height: 100vh;
-    }
-    .sidebar {
-        width: 250px;
-        background-color: #0069d2;
-        color: white;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-    .logo {
-        width: 200px;
-        margin-bottom: 20px;
-    }
-    .menu {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        width: 100%;
-    }
-    .menu button {
-        background-color: white;
-        color: #0055a9;
-        border: none;
-        padding: 10px;
-        font-size: 1em;
-        cursor: pointer;
-        border-radius: 5px;
-        text-align: left;
-        transition: background 0.2s;
-    }
-    .menu button:hover {
-        background-color: #ddd;
-    }
-    .main {
-        flex: 1;
-        padding: 20px;
-        background-color: white;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-    .profile-pic {
-        width: 120px;
-        height: 120px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 3px solid #0069d2;
-        margin-bottom: 20px;
-    }
-    h2 {
-        margin-bottom: 5px;
-    }
-    p {
-        margin: 3px 0;
-        font-size: 1.3em;
-        color: #363636;
-    }
-    .badges {
-        display: inline-flex;
-        gap: 7px;
-        vertical-align: middle;
-    }
-    .badges img {
-        height: 24px;
-        width: auto;
-    }
-    .elo {
-        margin-top: 5px;
-        font-size: 1.8em;
-        font-weight: bold;
-        color: #004890;
-    }
-    #avatarSelect {
-        padding: 10px 16px;
-        font-size: 1.08em;
-        border-radius: 8px;
-        border: 2px solid #0069d2;
-        background: #e9f4ff;
-        color: #004890;
-        margin-bottom: 18px;
-        outline: none;
-        transition: border-color 0.2s, box-shadow 0.2s;
-        box-shadow: 0 2px 8px rgba(0,105,210,0.10);
-        cursor: pointer;
-        min-width: 160px;
-        max-width: 240px;
-    }
-    #avatarSelect:focus {
-        border-color: #004890;
-        background: #d0eaff;
-        box-shadow: 0 0 0 2px #88c6ff;
-    }
+  .container {
+    display: flex;
+    height: 100vh;
+    position: relative;
+    z-index: 1;
+  }
+  .sidebar {
+    width: 260px;
+    background: rgba(0,0,0,.35);
+    border-right: 1px solid rgba(255,255,255,.1);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 0 25px var(--shadow);
+    animation: glow 3s infinite alternate;
+  }
+  .logo {
+    width: 200px;
+    margin-bottom: 20px;
+  }
+  .menu {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+  }
+  .menu button {
+    background: rgba(255,255,255,.1);
+    color: var(--text);
+    border: none;
+    padding: 12px;
+    font-size: 1em;
+    cursor: pointer;
+    border-radius: 8px;
+    text-align: left;
+    transition: background .2s, transform .2s;
+  }
+  .menu button:hover {
+    background: var(--brand);
+    color:#00122e;
+    transform: translateX(5px);
+  }
+  .main {
+    flex: 1;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: auto;
+  }
+  .profile-pic {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--brand);
+    margin-bottom: 20px;
+    box-shadow: 0 0 20px var(--shadow);
+  }
+  h2 {
+    margin-bottom: 5px;
+  }
+  p {
+    margin: 3px 0;
+    font-size: 1.2em;
+    color: var(--muted);
+  }
+  .badges {
+    display: inline-flex;
+    gap: 7px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .badges img {
+    height: 22px;
+    width: auto;
+  }
+  .elo {
+    margin-top: 8px;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--ok);
+  }
+  #avatarSelect {
+    padding: 10px 16px;
+    font-size: 1em;
+    border-radius: 8px;
+    border: 2px solid var(--brand);
+    background: rgba(255,255,255,.08);
+    color: var(--text);
+    margin-bottom: 18px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    min-width: 160px;
+    max-width: 240px;
+  }
+  #avatarSelect:focus {
+    border-color: var(--ok);
+    box-shadow: 0 0 0 2px var(--brand);
+  }
+  @keyframes glow {
+    from { box-shadow:0 0 15px var(--shadow); }
+    to   { box-shadow:0 0 40px var(--shadow); }
+  }
+  #avatarSelect option {
+    background: var(--panel);
+    color: var(--text);
+    border-radius: 5px;
+    padding: 8px;
+    font-size: 1em;
+  }
+  /* Banners */
+  .banner {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 14px 22px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    cursor: pointer;
+    z-index: 9999;
+    animation: floatIn 0.4s ease-out;
+  }
+  @keyframes floatIn {
+    from { opacity: 0; transform: translate(-50%, 20px); }
+    to   { opacity: 1; transform: translate(-50%, 0); }
+  }
+  #joinBanner { background: #28a745; color: white; }
+  #challengeBanner { background: #ffc107; color: black; cursor: default; }
+  .banner button {
+    margin-left: 8px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .banner #green { background: #28a745; color: white; }
+  .banner #red { background: #ff4d4d; color: white; }
+</style>
 </style>
 </head>
 <body>
-
+<div id="particles-js"></div>
 <div class="container">
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <img src="files/img/-w-logo.png" alt="Blue Chess.in" class="logo">
-        <div class="menu">
-            <button onclick="window.location.href='home.html'">🏠 Home</button>
-            <button onclick="window.location.href='profile.html'">👤 Profile</button>
-        </div>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <img src="files/img/-w-logo.png" alt="Blue Chess.in" class="logo">
+    <div class="menu">
+      <button onclick="window.location.href='home.html'">🏠 Home</button>
+      <button onclick="window.location.href='profile.html'">👤 Profile</button>
+      <button onclick="window.location.href='shop.html'">🛒 Shop</button>
+      <button onclick="window.location.href='online-game.html'">♟ Online</button>
+      <button onclick="window.location.href='off-game.html'">🏁 Offline</button>
+      <button onclick="window.location.href='learnchess.html'">❓ Learn</button>
+      <button onclick="logout()">🚪 Logout</button>
     </div>
+  </div>
 
-    <!-- Main Profile Section -->
-    <div class="main">
-        <img id="profilePic" class="profile-pic" src="files/img/profiles/default-avatar.png" alt="Profile Picture">
-        <select id="avatarSelect" style="margin-bottom:15px; display:none;"></select>
-        <h2 id="username">Loading...</h2>
-        <p id="email">Loading...</p>
-        <p id="elo" class="elo">ELO: Loading...</p>
-        <p id="blueRooks" class="elo">
-            <img src="files/img/blue-rook.png" alt="Blue Rooks" style="height:30px; vertical-align:middle; margin-right:5px;">
-            Loading...
-        </p>
-        
-    </div>
+  <!-- Main Profile Section -->
+  <div class="main">
+    <img id="profilePic" class="profile-pic" src="files/img/profiles/default-avatar.png" alt="Profile Picture">
+    <select id="avatarSelect" style="margin-bottom:15px; display:none;"></select>
+    <h2 id="username">Loading...</h2>
+    <p id="email">Loading...</p>
+    <p id="elo" class="elo">ELO: Loading...</p>
+    <p id="blueRooks" class="elo">
+      <img src="files/img/blue-rook.png" alt="Blue Rooks" style="height:26px; vertical-align:middle; margin-right:5px;">
+      Loading...
+    </p>
+  </div>
 </div>
+<audio id="challengeSound" src="files/sound/challenge.wav" preload="auto"></audio>
+<audio id="acceptedSound" src="files/sound/accepted.wav" preload="auto"></audio>
 
-<script type="module">
+<script>
 const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function loadProfile() {
-    // 🔹 Check maintenance first
-    const { data: settings } = await supabaseClient.from("settings").select("maintenance").single();
-    if (settings?.maintenance) {
-        window.location.href = "maintenance.html";
-        return;
-    }
+  const { data: { user }, error } = await supabaseClient.auth.getUser();
+  if (error || !user) {
+    window.location.href = "index.html";
+    return;
+  }
+  currentUserId = user.id;
 
-    // 🔹 Get logged-in user
-    const { data: { user }, error } = await supabaseClient.auth.getUser();
-    if (error || !user) {
-        window.location.href = "index.html";
-        return;
-    }
+  const { data: profileRow } = await supabaseClient
+    .from("profiles")
+    .select("username, profile, owner, dev, admin, coadmin, elo, blue_rooks")
+    .eq("id", user.id)
+    .single();
 
-    // 🔹 Fetch profile
-    const { data: profileRow, error: profileError } = await supabaseClient
-        .from("profiles")
-        .select("username, profile, owner, dev, admin, coadmin, elo, blue_rooks, banned")
-        .eq("id", user.id)
-        .single();
+  document.getElementById("blueRooks").innerHTML = `<img src="files/img/blue-rook.png" style="height:26px; vertical-align:middle; margin-right:5px;"> ${profileRow?.blue_rooks ?? 0}`;
 
-    if (profileRow?.banned) {
-        window.location.href = "banned.html";
-        return;
-    }
+  const usernameEl = document.getElementById("username");
+  usernameEl.textContent = profileRow?.username || "No username set";
 
-    // Blue rooks count
-    document.getElementById("blueRooks").innerHTML =
-      `<img src="files/img/blue-rook.png" style="height:30px; vertical-align:middle; margin-right:5px;"> ${profileRow?.blue_rooks ?? 0}`;
+  const badgesDiv = document.createElement("span");
+  badgesDiv.classList.add("badges");
+  const badgeFolder = "files/img/badges/";
+  if (profileRow?.owner) badgesDiv.innerHTML += `<img src="${badgeFolder}owner.png">`;
+  if (profileRow?.dev) badgesDiv.innerHTML += `<img src="${badgeFolder}dev.png">`;
+  if (profileRow?.admin) badgesDiv.innerHTML += `<img src="${badgeFolder}admin.png">`;
+  if (profileRow?.coadmin) badgesDiv.innerHTML += `<img src="${badgeFolder}coadmin.png">`;
+  usernameEl.appendChild(badgesDiv);
 
-    if (profileError || !profileRow) {
-        document.getElementById("username").textContent = "Unknown User";
-        document.getElementById("email").textContent = user.email;
-        document.getElementById("elo").textContent = "ELO: N/A";
-        return;
-    }
+  document.getElementById("email").textContent = user.email;
+  document.getElementById("elo").textContent = "ELO: " + (profileRow?.elo ?? 1200);
 
-    // Username + badges
-    const usernameEl = document.getElementById("username");
-    usernameEl.textContent = profileRow.username || "No username set";
+  const { data: ownedAvatars } = await supabaseClient
+    .from("owned_avatars")
+    .select("avatar_path")
+    .eq("user_id", user.id);
 
-    const badgesDiv = document.createElement("span");
-    badgesDiv.classList.add("badges");
-    const badgeFolder = "files/img/badges/";
-    if (profileRow.owner) badgesDiv.innerHTML += `<img src="${badgeFolder}owner.png">`;
-    if (profileRow.dev) badgesDiv.innerHTML += `<img src="${badgeFolder}dev.png">`;
-    if (profileRow.admin) badgesDiv.innerHTML += `<img src="${badgeFolder}admin.png">`;
-    if (profileRow.coadmin) badgesDiv.innerHTML += `<img src="${badgeFolder}coadmin.png">`;
-    usernameEl.appendChild(badgesDiv);
+  const avatarSelect = document.getElementById("avatarSelect");
+  avatarSelect.innerHTML = "<option value=''>Default</option>";
+  if (profileRow?.owner) avatarSelect.innerHTML += `<option value="bluechess.in.png">BlueChess.in (Owner)</option>`;
+  if (ownedAvatars?.length) {
+    ownedAvatars.forEach(a => {
+      const fileName = a.avatar_path.split("/").pop();
+      if (!(profileRow.owner && fileName === "bluechess.in.png")) {
+        avatarSelect.innerHTML += `<option value="${a.avatar_path}">${fileName}</option>`;
+      }
+    });
+    avatarSelect.style.display = "inline-block";
+  }
 
-    // Email
-    document.getElementById("email").textContent = user.email;
+  let avatarUrl = "files/img/profiles/default-avatar.png";
+  if (profileRow?.profile) {
+    avatarUrl = `${SUPABASE_URL}/storage/v1/object/public/avatars/${profileRow.profile}`;
+    avatarSelect.value = profileRow.profile;
+  }
+  document.getElementById("profilePic").src = avatarUrl;
 
-    // ELO
-    document.getElementById("elo").textContent = "ELO: " + (profileRow.elo ?? 1200);
+  avatarSelect.onchange = async function() {
+    let newPath = avatarSelect.value;
+    let newUrl = "files/img/profiles/default-avatar.png";
+    if (newPath) newUrl = `${SUPABASE_URL}/storage/v1/object/public/avatars/${newPath}`;
+    document.getElementById("profilePic").src = newUrl;
+    await supabaseClient.from("profiles").update({ profile: newPath || null }).eq("id", user.id);
+  };
+}
 
-    // 🔹 Load owned avatars
-    const { data: ownedAvatars } = await supabaseClient
-        .from("owned_avatars")
-        .select("avatar_path")
-        .eq("user_id", user.id);
-
-    const avatarSelect = document.getElementById("avatarSelect");
-    avatarSelect.innerHTML = `<option value="">Default</option>`; // always default
-
-    if (profileRow.owner) {
-        avatarSelect.innerHTML += `<option value="bluechess.in.png">BlueChess.in (Owner)</option>`;
-    }
-
-    if (ownedAvatars?.length > 0) {
-        ownedAvatars.forEach(a => {
-            const fileName = a.avatar_path.split("/").pop();
-            if (!(profileRow.owner && fileName === "bluechess.in.png")) {
-                avatarSelect.innerHTML += `<option value="${a.avatar_path}">${fileName}</option>`;
-            }
-        });
-        avatarSelect.style.display = "inline-block";
-    } else {
-        avatarSelect.style.display = profileRow.owner ? "inline-block" : "none";
-    }
-
-    // Set current avatar
-    let avatarUrl = "files/img/profiles/default-avatar.png";
-    if (profileRow.profile) {
-        avatarUrl = `https://ruevzmnbhoowmuleeqjb.supabase.co/storage/v1/object/public/avatars/${profileRow.profile}`;
-        avatarSelect.value = profileRow.profile;
-    } else {
-        avatarSelect.value = "";
-    }
-    document.getElementById("profilePic").src = avatarUrl;
-
-    // Handle avatar change
-    avatarSelect.onchange = async function() {
-        let newPath = avatarSelect.value;
-        let newUrl = "files/img/profiles/default-avatar.png";
-        if (newPath) {
-            newUrl = `https://ruevzmnbhoowmuleeqjb.supabase.co/storage/v1/object/public/avatars/${newPath}`;
-        }
-        document.getElementById("profilePic").src = newUrl;
-
-        await supabaseClient
-            .from("profiles")
-            .update({ profile: newPath || null })
-            .eq("id", user.id);
-    };
+async function logout() {
+  await supabaseClient.auth.signOut();
+  window.location.href = "index.html";
 }
 
 loadProfile();
+listenForMatchUpdates();
+
+function listenForMatchUpdates() {
+  supabaseClient.channel("match_updates")
+    .on("postgres_changes", { event: "*", schema: "public", table: "match_requests" }, payload => {
+      const match = payload.new;
+      if (!match) return;
+
+      if (match.challenger_id === currentUserId && match.status === "accepted" && match.game_id) {
+        playSound("acceptedSound");
+        showJoinBanner(match.game_id);
+      }
+
+      if (match.challenged_id === currentUserId && match.status === "pending") {
+        playSound("challengeSound");
+        showChallengeBanner(match.id, match.challenger_id);
+      }
+    })
+    .subscribe();
+}
+
+function playSound(soundId) {
+  const sound = document.getElementById(soundId);
+  if (!sound) return;
+  sound.currentTime = 0;
+  sound.play().catch(() => {});
+}
+
+function showJoinBanner(gameId) {
+  if (document.getElementById("joinBanner")) return;
+  const banner = document.createElement("div");
+  banner.id = "joinBanner";
+  banner.className = "banner";
+  banner.textContent = "✅ Your challenge was accepted! Click to join the game.";
+  banner.onclick = () => {
+    window.location.href = `play-game.html?game=${gameId}`;
+  };
+  document.body.appendChild(banner);
+}
+
+async function showChallengeBanner(matchId, challengerId) {
+  if (document.getElementById("challengeBanner")) return;
+  const { data: challenger } = await supabaseClient
+    .from("profiles")
+    .select("username")
+    .eq("id", challengerId)
+    .single();
+
+  const banner = document.createElement("div");
+  banner.id = "challengeBanner";
+  banner.className = "banner";
+  banner.innerHTML = `🎯 Challenge from <b>${challenger?.username || "Unknown"}</b> 
+    <button onclick="acceptChallenge('${matchId}')" id="green">Accept</button>
+    <button onclick="declineChallenge('${matchId}')" id="red">Decline</button>`;
+  document.body.appendChild(banner);
+}
+
+async function acceptChallenge(matchId) {
+  const { data: match } = await supabaseClient
+    .from("match_requests")
+    .select("*")
+    .eq("id", matchId)
+    .single();
+  if (!match) return;
+
+  const white = Math.random() < 0.5 ? match.challenger_id : match.challenged_id;
+  const black = (white === match.challenger_id) ? match.challenged_id : match.challenger_id;
+
+  const { data: game } = await supabaseClient
+    .from("games")
+    .insert({ white_id: white, black_id: black, fen: "start" })
+    .select()
+    .single();
+
+  await supabaseClient
+    .from("match_requests")
+    .update({ status: "accepted", game_id: game.id })
+    .eq("id", matchId);
+
+  document.getElementById("challengeBanner")?.remove();
+  window.location.href = `play-game.html?game=${game.id}`;
+}
+
+async function declineChallenge(matchId) {
+  await supabaseClient
+    .from("match_requests")
+    .update({ status: "declined" })
+    .eq("id", matchId);
+  document.getElementById("challengeBanner")?.remove();
+}
+
+// Particles.js config
+  particlesJS("particles-js", {
+    particles: {
+      number: { value: 100, density: { enable: true, value_area: 800 } },
+      color: { value: "#4aa3ff" },
+      shape: { type: "circle" },
+      opacity: { value: 0.5 },
+      size: { value: 3 },
+      line_linked: { enable: true, distance: 150, color: "#4aa3ff", opacity: 0.4, width: 1 },
+      move: { enable: true, speed: 2 }
+    },
+    interactivity: {
+      detect_on: "canvas",
+      events: { onhover: { enable: true, mode: "repulse" } }
+    },
+    retina_detect: true
+  });
 </script>
+</body>
+</html>
