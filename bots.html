@@ -2,301 +2,523 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Blue Chess.in – Play vs Bot</title>
-<meta name="description" content="Test your chess skills against Blue Chess.in's AI bots. Practice, improve, and challenge yourself anytime.">
+<title>Blue Chess.in - Play vs Bot</title>
 <link rel="stylesheet" href="chessboard.js/chessboard.css">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="chessboard.js/chessboard.js"></script>
 <script src="chess.js/chess.min.js"></script>
+<meta name="description" content="Test your chess skills against Blue Chess.in's AI bots. Practice, improve, and challenge yourself anytime.">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
 <link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
 <style>
-    body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background-color: #e9f4ff;
-        color: #333;
-    }
-    .container {
-        display: flex;
-        height: 100vh;
-    }
-    .sidebar {
-        width: 250px;
-        background-color: #0069d2;
-        color: white;
-        display: flex;
-        flex-direction: column;
-        padding: 20px;
-    }
-    .sidebar h2 {
-        text-align: center;
-        margin-bottom: 20px;
-        font-size: 1.4em;
-    }
-    .player {
-        background: rgba(255,255,255,0.15);
-        padding: 10px;
-        border-radius: 8px;
-        margin-bottom: 15px;
-    }
-    .main {
-        flex: 1;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 20px;
-        gap: 20px;
-    }
-    .board-container {
-        background: white;
-        padding: 15px;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    #board {
-        width: 500px;
-        max-width: 90vw;
-    }
-    .moves {
-        background: white;
-        padding: 15px;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        width: 200px;
-        overflow-y: auto;
-        max-height: 500px;
-    }
-    .controls {
-        margin-top: auto;
-    }
-    .controls button {
-        width: 100%;
-        padding: 10px;
-        margin-top: 10px;
-        font-size: 1em;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-    .resign { background: #ff4d4d; color: white; }
-    .draw { background: #ffc107; color: white; }
-    .restart { background: #28a745; color: white; }
-
-    /* Highlights */
-    .highlight-square {
-        background-color: rgba(255, 255, 0, 0.5) !important;
-    }
-    .possible-move {
-        position: relative;
-    }
-    .possible-move::after {
-        content: "";
-        width: 50%;
-        height: 50%;
-        background: rgba(0, 162, 255, 0.6);
-        border-radius: 50%;
-        position: absolute;
-        top: 25%;
-        left: 25%;
+  body {
+    margin: 0; 
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(120deg,#02122a,#0f2b55);
+    color: white; 
+    overflow: hidden;
+  }
+  #particles-js {
+    position: fixed; top:0; left:0; width:100%; height:100%;
+    z-index: -1;
+  }
+  .container { display: flex; height: 100vh; }
+  .logo {
+      width: 200px;
+      margin: 0 auto 20px;
+      display: block;
     }
 
-    /* Promotion Popup */
-    #promotionPopup {
-        display: none;
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: white;
-        border: 2px solid #0069d2;
-        padding: 20px;
-        z-index: 999;
-        text-align: center;
-        border-radius: 10px;
-    }
-    #promotionChoices img {
-        width: 60px;
-        height: 60px;
-        cursor: pointer;
-        margin: 5px;
-    }
-    .go-home { background: #285fa7; color: white; }
+  /* Sidebars */
+  .bot-sidebar, .board-sidebar {
+    width: 260px; padding: 20px;
+    display: flex; flex-direction: column;
+    backdrop-filter: blur(12px);
+    background: rgba(16,45,86,0.65);
+    border-right: 1px solid rgba(0,183,255,0.3);
+    box-shadow: 0 0 25px rgba(0,183,255,0.4);
+    transition: transform 0.6s ease;
+    z-index: 100;
+  }
+  .bot-sidebar { transform: translateX(0); }
+  .bot-sidebar.hidden { transform: translateX(-100%); }
+  .board-sidebar { transform: translateX(0); }
+  .board-sidebar.shifted { transform: translateX(-260px); }
+  .bot-sidebar h2, .board-sidebar h2 { text-align: center; margin-bottom: 20px; }
+
+  
+  .bot-card {
+    background: rgba(28, 78, 137, 0.7);
+    border-radius: 10px;
+    padding: 12px;
+    margin: 8px 0;
+    cursor: pointer;
+    transition: 0.3s;
+    text-align: center;
+    font-weight: 500;
+    box-shadow: 0 0 10px rgba(0,183,255,0.2);
+    height: 15px;
+  }
+  .bot-card:hover {
+    transform: translateY(-3px);
+    background: rgba(41, 112, 201, 0.85);
+    box-shadow: 0 0 20px rgba(0,183,255,0.6);
+  }
+  .bot-card.selected {
+    background: rgba(0,183,255,0.9);
+    border: 2px solid #00eaff;
+    box-shadow: 0 0 25px #00eaff;
+    font-weight: bold;
+  }
+
+  
+  .start-btn {
+    margin-top: 20px;
+    padding: 12px;
+    width: 100%;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    color: white;
+    background: linear-gradient(135deg, #00b7ff, #2970c9);
+    box-shadow: 0 0 15px rgba(0,183,255,0.6);
+    transition: all 0.3s ease;
+  }
+  .start-btn:hover {
+    background: linear-gradient(135deg, #00eaff, #2990ff);
+    box-shadow: 0 0 30px #00eaff;
+    transform: scale(1.05);
+  }
+  .start-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+
+  
+  .board-container {
+    margin: auto; padding: 20px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 12px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.6);
+    transition: 0.4s;
+  }
+  #board { width: 520px; max-width: 90vw; }
+
+  
+  .slider-container { margin-top: 15px; text-align: center; }
+  .slider-container input {
+    width: 100%;
+    appearance: none;
+    height: 6px; border-radius: 5px;
+    background: linear-gradient(90deg, #00b7ff, #2970c9);
+    outline: none;
+  }
+  .slider-container input::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px; height: 18px;
+    background: #00b7ff; border-radius: 50%;
+    cursor: pointer; border: 2px solid #fff;
+    box-shadow: 0 0 10px #00b7ff;
+    transition: 0.2s;
+  }
+  #thinkTimeLabel {
+    display: inline-block;
+    background: #00b7ff;
+    color: #fff; padding: 2px 8px;
+    border-radius: 6px; margin-left: 5px;
+    font-weight: bold;
+  }
+
+ 
+  .color-options {
+    margin-top: 15px; text-align:center;
+  }
+  .color-options label {
+    display: inline-block;
+    margin: 0 10px; cursor: pointer;
+    padding: 5px 12px; border-radius: 8px;
+    background: rgba(28,78,137,0.6);
+    transition: 0.3s;
+  }
+  .color-options input { display: none; }
+  .color-options input:checked + span {
+    background: #00b7ff; color: #fff; font-weight: bold;
+    padding: 5px 12px; border-radius: 8px;
+    box-shadow: 0 0 10px #00b7ff;
+  }
+
+  
+  .board-sidebar button {
+    margin-top: 12px;
+    padding: 10px; border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer; transition: 0.3s;
+    background: linear-gradient(135deg,#00b7ff,#2970c9);
+    color: white; box-shadow: 0 0 10px rgba(0,183,255,0.5);
+  }
+  .board-sidebar button:hover { transform: scale(1.05); box-shadow: 0 0 20px #00b7ff; }
+
+  
+  .highlight-square { background-color: rgba(255, 255, 0, 0.5) !important; }
+  .possible-move {
+    position: relative;
+  }
+  .possible-move::after {
+    content: "";
+    width: 50%; height: 50%;
+    background: rgba(0, 162, 255, 0.6);
+    border-radius: 50%;
+    position: absolute; top: 25%; left: 25%;
+  }
+
+  
+  .modal {
+    display: none; position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    justify-content: center; align-items: center;
+    z-index: 200;
+  }
+  .modal-content {
+    background: rgba(16,45,86,0.95); color: #fff;
+    padding: 25px; border-radius: 12px;
+    text-align: center; width: 320px;
+    border: 2px solid #00b7ff;
+    box-shadow: 0 0 25px rgba(0,183,255,0.8);
+    animation: pop 0.4s ease;
+  }
+  .modal-content button {
+    margin-top: 15px; padding: 10px 20px;
+    border: none; border-radius: 6px;
+    background: #00b7ff; color: #fff;
+    font-weight: bold; cursor: pointer;
+    transition: 0.2s;
+  }
+  .modal-content button:hover { background: #2970c9; }
+
+  @keyframes pop {
+    0% { transform: scale(0.7); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  #newBot:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  
+  .banner {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 14px 22px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    cursor: pointer;
+    z-index: 9999;
+    animation: floatIn 0.4s ease-out;
+  }
+  @keyframes floatIn {
+    from { opacity: 0; transform: translate(-50%, 20px); }
+    to   { opacity: 1; transform: translate(-50%, 0); }
+  }
+  #joinBanner { background: #28a745; color: white; }
+  #challengeBanner { background: #ffc107; color: black; cursor: default; }
+  .banner button {
+    margin-left: 8px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .banner #green { background: #28a745; color: white; }
+  .banner #red { background: #ff4d4d; color: white; }
 </style>
 </head>
 <body>
-
+<div id="particles-js"></div>
 <div class="container">
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <h2>Blue Chess.in</h2>
-        <div class="player">White: <span id="whitePlayer">You</span></div>
-        <div class="player">Black: <span id="blackPlayer">Bot</span></div>
-        <div class="controls">
-            <button class="go-home" onclick="window.location.href = 'home.html';">Go Home</button>
-            <button class="resign" onclick="resign()">Resign</button>
-            <button class="draw" onclick="offerDraw()">Offer Draw</button>
-            <button class="restart" onclick="restartGame()">Restart</button>
-        </div>
+
+  <div id="botSidebar" class="bot-sidebar">
+    <h2>🤖 Choose Bot</h2>
+    <div class="bot-card" onclick="selectBot('Leon',250)">Beginner: Leon (250 Elo)</div>
+    <div class="bot-card" onclick="selectBot('Ron',500)">Beginner: Ron (500 Elo)</div>
+    <div class="bot-card" onclick="selectBot('Chess?',3500)">Beginner: Chess? (0 Elo)</div>
+    <div class="bot-card" onclick="selectBot('Nexus',750)">Intermediate: Nexus (750 Elo)</div>
+    <div class="bot-card" onclick="selectBot('Daily',950)">Intermediate: Daily (950 Elo)</div>
+    <div class="bot-card" onclick="selectBot('Emily',1200)">Grandmaster: Emily (1200 Elo)</div>
+    <div class="bot-card" onclick="selectBot('Germis',2100)">Grandmaster: Germis (2100 Elo)</div>
+
+    <div class="slider-container">
+      ⏱ Time: <span id="thinkTimeLabel">1000</span> ms
+      <input type="range" id="thinkTime" min="500" max="5000" step="500" value="1000">
     </div>
 
-    <!-- Main Game Area -->
-    <div class="main">
-        <div class="board-container">
-            <div id="board"></div>
-        </div>
-        <div class="moves">
-            <h3>Moves</h3>
-            <ol id="moveList"></ol>
-        </div>
+    <div class="color-options">
+      <label><input type="radio" name="color" value="w" checked><span>White</span></label>
+      <label><input type="radio" name="color" value="b"><span>Black</span></label>
+      <label><input type="radio" name="color" value="r"><span>Random</span></label>
     </div>
+
+    <button class="start-btn" id="startBtn" onclick="startGame()" >🚀 Start Game</button>
+  </div>
+
+  
+  <div id="playerSidebar" class="board-sidebar">
+    
+    <img src="files/img/-w-logo.png" alt="Blue Chess.in" class="logo">
+    <div>White: <span id="whitePlayer">You</span></div>
+    <div>Black: <span id="blackPlayer">Bot</span></div>
+    <button onclick="resign()">Resign</button>
+    <button onclick="offerDraw()">Offer Draw</button>
+    <button onclick="restartGame()">Restart</button>
+
+    <br>
+    <br>
+
+    <button id="newBot" onclick="newBot()" disabled>Select New Bot!</button>
+
+    <br>
+
+    <button onclick="window.location.href='home.html'">Go Home</button>
+  </div>
+
+  <div class="board-container">
+    <div id="board"></div>
+  </div>
 </div>
 
-<!-- Promotion Popup -->
-<div id="promotionPopup">
-    <h3>Promote to:</h3>
-    <div id="promotionChoices"></div>
+
+<div id="modal" class="modal">
+  <div class="modal-content">
+    <p id="modalText"></p>
+    <button onclick="closeModal()">OK</button>
+  </div>
 </div>
+
+<audio id="challengeSound" src="files/sound/challenge.wav" preload="auto"></audio>
+<audio id="acceptedSound" src="files/sound/accepted.wav" preload="auto"></audio>
 
 <script>
-    let game = new Chess();
-    let selectedSquare = null;
+const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let board = Chessboard('board', {
-        position: 'start',
-        pieceTheme: 'chessboard.js/img/chesspieces/bluechess.in/{piece}.png'
-    });
+let currentUserId = null;
 
-    function updateMoveList() {
-        let moves = game.history();
-        let list = document.getElementById("moveList");
-        list.innerHTML = "";
-        moves.forEach((m) => {
-            let li = document.createElement("li");
-            li.textContent = m;
-            list.appendChild(li);
-        });
+async function checkAuth() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+      window.location.href = "index.html";
+      return;
+    }
+    currentUserId = user.id;
+
+    
+    const { data: profile } = await supabaseClient.from("profiles").select("banned").eq("id", user.id).single();
+    if (profile && profile.banned) {
+      window.location.href = "banned.html";
+      return;
     }
 
-    function clearHighlights() {
-        $('#board .square-55d63').removeClass('highlight-square possible-move');
+    
+    const { data: settings } = await supabaseClient.from("settings").select("maintenance").limit(1).single();
+    if (settings && settings.maintenance) {
+      window.location.href = "maintenance.html";
+      return;
     }
+  }
 
-    function highlightSquare(square) {
-        $(`#board .square-${square}`).addClass('highlight-square');
-    }
+  checkAuth();
+  listenForMatchUpdates();
 
-    function highlightPossibleMoves(square) {
-        let moves = game.moves({ square, verbose: true });
-        moves.forEach(m => {
-            $(`#board .square-${m.to}`).addClass('possible-move');
-        });
-    }
 
-    function onSquareClick(square) {
-        if (selectedSquare === null) {
-            let piece = game.get(square);
-            if (piece && piece.color === game.turn()) {
-                selectedSquare = square;
-                clearHighlights();
-                highlightSquare(square);
-                highlightPossibleMoves(square);
-            }
-        } else {
-            if (square === selectedSquare) {
-                selectedSquare = null;
-                clearHighlights();
-                return;
-            }
+let game = new Chess();
+let board = Chessboard('board', {
+  position: 'start',
+  pieceTheme: 'chessboard.js/img/chesspieces/bluechess.in/{piece}.png'
+});
+let engine = null, currentBot = null, selectedColor = 'w', thinkTime = 1000, selectedSquare = null;
 
-            let piece = game.get(selectedSquare);
-            if (piece && piece.type === 'p' &&
-                ((piece.color === 'w' && square[1] === '8') ||
-                 (piece.color === 'b' && square[1] === '1'))) {
-                showPromotionDialog(selectedSquare, square);
-                return;
-            }
+function showModal(msg){document.getElementById("modalText").textContent=msg;document.getElementById("modal").style.display="flex";}
+function closeModal(){document.getElementById("modal").style.display="none";}
 
-            let move = game.move({ from: selectedSquare, to: square });
-            if (move !== null) {
-                board.position(game.fen());
-                updateMoveList();
-                checkGameOver();
-                if (game.turn() === 'b') {
-                    setTimeout(makeBotMove, 500);
-                }
-            }
-            selectedSquare = null;
-            clearHighlights();
-        }
-    }
+// Engine
+function loadEngine(){
+  try{
+    engine = new Worker("files/js/stockfish.js");
+    engine.onmessage = (e)=>{
+      if(typeof e.data==="string"&&e.data.startsWith("bestmove")){
+        let move=e.data.split(" ")[1];
+        if(move&&move!=="(none)"){game.move({from:move.substring(0,2),to:move.substring(2,4),promotion:'q'});board.position(game.fen(),true);checkGameOver();}
+      }
+    };
+    engine.postMessage("uci");engine.postMessage("isready");
+  }catch(err){showModal("Stockfish failed to load!");console.error(err);}
+}
+function newBot(){
+  window.location.reload();
+}
+function selectBot(name,elo){
+  if(!engine)loadEngine();
+  currentBot={name,elo};
+  engine.postMessage("ucinewgame");
+  engine.postMessage("setoption name UCI_LimitStrength value true");
+  engine.postMessage(`setoption name UCI_Elo value ${elo}`);
+  showModal(`${name} selected (${elo} Elo)!`);
+  document.getElementById("selectedBot").textContent = `Selected Bot: ${name} (${elo} Elo)`;
+  document.getElementById("botSidebar").classList.add("hidden");
+  document.getElementById("playerSidebar").classList.remove("shifted");
 
-    function showPromotionDialog(from, to) {
-        let popup = document.getElementById("promotionPopup");
-        let choicesDiv = document.getElementById("promotionChoices");
-        choicesDiv.innerHTML = "";
-        ['q', 'r', 'b', 'n'].forEach(piece => {
-            let img = document.createElement("img");
-            img.src = `chessboard.js/img/chesspieces/bluechess.in/${game.turn()}${piece.toUpperCase()}.png`;
-            img.onclick = () => {
-                game.move({ from, to, promotion: piece });
-                board.position(game.fen());
-                updateMoveList();
-                checkGameOver();
-                popup.style.display = 'none';
-                selectedSquare = null;
-                clearHighlights();
-                if (game.turn() === 'b') {
-                    setTimeout(makeBotMove, 500);
-                }
-            };
-            choicesDiv.appendChild(img);
-        });
-        popup.style.display = 'block';
-    }
+  // Remove highlight from all bots
+  document.querySelectorAll('.bot-card').forEach(card => card.classList.remove('selected'));
 
-    function checkGameOver() {
-        if (game.in_checkmate()) {
-            alert("Checkmate! " + (game.turn() === 'w' ? "Black" : "White") + " wins!");
-        } else if (game.in_draw()) {
-            alert("Draw!");
-        }
-    }
+  // Highlight clicked bot
+  el.classList.add('selected');
 
-    function makeBotMove() {
-        let moves = game.moves();
-        if (moves.length === 0) return;
-        let move = moves[Math.floor(Math.random() * moves.length)];
-        game.move(move);
-        board.position(game.fen());
-        updateMoveList();
-        checkGameOver();
-    }
+  // Enable Start Game button
+  document.getElementById('startBtn').disabled = false;
 
-    function resign() {
-        alert("You resigned! Bot wins!");
-        game.reset();
-        board.start();
-        updateMoveList();
-    }
+}
+function startGame(){
+  if(!currentBot){showModal("Please select a bot first!");return;}
+  selectedColor=document.querySelector('input[name="color"]:checked').value;
+  thinkTime=parseInt(document.getElementById("thinkTime").value);
+  document.getElementById("botSidebar").classList.add("hidden");
+  document.getElementById("playerSidebar").classList.add("shifted");
+  game.reset();board.position("start");
+  if(selectedColor==='b'||(selectedColor==='r'&&Math.random()<0.5)){makeBotMove();}
+}
 
-    function offerDraw() {
-        alert("Draw offered! Bot is thinking...");
-    }
+// Highlighting
+function clearHighlights(){ $('#board .square-55d63').removeClass('highlight-square possible-move'); }
+function highlightSquare(square){ $(`#board .square-${square}`).addClass('highlight-square'); }
+function highlightPossibleMoves(square){ let moves=game.moves({square,verbose:true}); moves.forEach(m=>{ $(`#board .square-${m.to}`).addClass('possible-move'); }); }
 
-    function restartGame() {
-        game.reset();
-        board.start();
-        updateMoveList();
-        selectedSquare = null;
-        clearHighlights();
-    }
+function onSquareClick(square){
+  if(selectedSquare===null){
+    let piece=game.get(square);if(piece&&piece.color===game.turn()){selectedSquare=square;clearHighlights();highlightSquare(square);highlightPossibleMoves(square);}
+  }else{
+    if(square===selectedSquare){selectedSquare=null;clearHighlights();return;}
+    let move=game.move({from:selectedSquare,to:square,promotion:'q'});
+    if(move){board.position(game.fen(),true);if(engine){engine.postMessage(`position fen ${game.fen()}`);engine.postMessage(`go movetime ${thinkTime}`);}checkGameOver();}
+    selectedSquare=null;clearHighlights();
+  }
+}
+$('#board').on('click','.square-55d63',function(){let square=$(this).attr('data-square');onSquareClick(square);});
 
-    $('#board').on('click', '.square-55d63', function() {
-        let square = $(this).attr('data-square');
-        onSquareClick(square);
-    });
+function makeBotMove(){engine.postMessage(`position fen ${game.fen()}`);engine.postMessage(`go movetime ${thinkTime}`);}
+function resign(){showModal("You resigned! Bot wins!"); document.getElementById("newBot").disabled = false;}
+function offerDraw(){showModal("You offered a draw! Bot declines 😅");}
+function restartGame(){game.reset();board.start();}
+function checkGameOver(){if(game.in_checkmate()){showModal("Checkmate! "+(game.turn()==='w'?"Black":"White")+" wins!"); document.getElementById("newBot").disabled = false;}else if(game.in_draw()){showModal("Draw!");}}
+document.getElementById("thinkTime").oninput=function(){document.getElementById("thinkTimeLabel").textContent=this.value;};
+
+
+function listenForMatchUpdates() {
+  supabaseClient.channel("match_updates")
+    .on("postgres_changes", { event: "*", schema: "public", table: "match_requests" }, payload => {
+      const match = payload.new;
+      if (!match) return;
+
+      if (match.challenger_id === currentUserId && match.status === "accepted" && match.game_id) {
+        playSound("acceptedSound");
+        showJoinBanner(match.game_id);
+      }
+
+      if (match.challenged_id === currentUserId && match.status === "pending") {
+        playSound("challengeSound");
+        showChallengeBanner(match.id, match.challenger_id);
+      }
+    })
+    .subscribe();
+}
+
+function playSound(soundId) {
+  const sound = document.getElementById(soundId);
+  if (!sound) return;
+  sound.currentTime = 0;
+  sound.play().catch(() => {});
+}
+
+function showJoinBanner(gameId) {
+  if (document.getElementById("joinBanner")) return;
+  const banner = document.createElement("div");
+  banner.id = "joinBanner";
+  banner.className = "banner";
+  banner.textContent = "✅ Your challenge was accepted! Click to join the game.";
+  banner.onclick = () => {
+    window.location.href = `play-game.html?game=${gameId}`;
+  };
+  document.body.appendChild(banner);
+}
+
+async function showChallengeBanner(matchId, challengerId) {
+  if (document.getElementById("challengeBanner")) return;
+  const { data: challenger } = await supabaseClient
+    .from("profiles")
+    .select("username")
+    .eq("id", challengerId)
+    .single();
+
+  const banner = document.createElement("div");
+  banner.id = "challengeBanner";
+  banner.className = "banner";
+  banner.innerHTML = `🎯 Challenge from <b>${challenger?.username || "Unknown"}</b> 
+    <button onclick="acceptChallenge('${matchId}')" id="green">Accept</button>
+    <button onclick="declineChallenge('${matchId}')"id="red">Decline</button>`;
+  document.body.appendChild(banner);
+}
+
+async function acceptChallenge(matchId) {
+  const { data: match } = await supabaseClient
+    .from("match_requests")
+    .select("*")
+    .eq("id", matchId)
+    .single();
+  if (!match) return;
+
+  const white = Math.random() < 0.5 ? match.challenger_id : match.challenged_id;
+  const black = (white === match.challenger_id) ? match.challenged_id : match.challenger_id;
+
+  const { data: game } = await supabaseClient
+    .from("games")
+    .insert({ white_id: white, black_id: black, fen: "start" })
+    .select()
+    .single();
+
+  await supabaseClient
+    .from("match_requests")
+    .update({ status: "accepted", game_id: game.id })
+    .eq("id", matchId);
+
+  document.getElementById("challengeBanner")?.remove();
+  window.location.href = `play-game.html?game=${game.id}`;
+}
+
+async function declineChallenge(matchId) {
+  await supabaseClient
+    .from("match_requests")
+    .update({ status: "declined" })
+    .eq("id", matchId);
+  document.getElementById("challengeBanner")?.remove();
+}
+
+
+// Particles.js config
+particlesJS("particles-js",{
+  "particles":{"number":{"value":80},"size":{"value":3},"move":{"speed":2},"line_linked":{"enable":true,"opacity":0.2},"color":{"value":"#00b7ff"}},
+  "interactivity":{"events":{"onhover":{"enable":true,"mode":"repulse"}}}
+});
 </script>
-
 </body>
 </html>
-
