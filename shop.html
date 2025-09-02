@@ -6,186 +6,441 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
 <style>
-    body { font-family: Arial, sans-serif; background: #e9f4ff; margin: 0; padding: 20px; }
-    h1 { text-align: center; color: #004890; }
-    .shop { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
-    .item {
-        background: white;
-        padding: 15px;
-        border-radius: 10px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        text-align: center;
-        width: 150px;
-    }
-    .item img { width: 100px; height: 100px; border-radius: 8px; }
-    .price { margin: 10px 0; font-weight: bold; width: 10px; }
-    button {
-        background: #004890;
-        color: white;
-        border: none;
-        padding: 6px 12px;
-        border-radius: 6px;
-        cursor: pointer;
-    }
-    button:hover { background: #003370; }
-    .price img {
-        height: 16px;
-        width: 16px;
-        vertical-align: middle;
-        margin-left: 0px;
-    }
-    button:disabled {
-        background: #ccc;
-        cursor: not-allowed;
-    }
-    #home {
-        background: #004890;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 5px;
-        cursor: pointer;
-        position: fixed;
-        top: 20px;
-        right: 20px;
-    }
+  :root {
+    --free:#22c55e;
+    --cheap:#3b82f6;
+    --standard:#a855f7;
+    --premium:#facc15;
+    --imposible:#2b39ff;
+    --bg1:#010d1d;
+    --bg2:#062a5c;
+    --card:#0e1f3d;
+    --text:#f0f6ff;
+    --muted:#aac7ff;
+    --glow:#4aa3ff;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: radial-gradient(circle at top, var(--bg2), var(--bg1));
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+
+  /* Floating particle effect */
+  body::before {
+    content:"";
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background-image: radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: drift 20s linear infinite;
+    z-index:0;
+  }
+  @keyframes drift {
+    from { transform:translate(0,0); }
+    to { transform:translate(-40px,-40px); }
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 2.6em;
+    background: linear-gradient(90deg,#7b53ff,#5b49ff,#2797ff,#489ed3);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 15px;
+    position: relative;
+    z-index: 1;
+  }
+
+  #balance {
+    text-align: center;
+    font-size: 1.2em;
+    margin-bottom: 25px;
+    padding: 12px 20px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    display: inline-block;
+    box-shadow: 0 0 18px rgba(74,163,255,.6);
+    animation: fadeIn 1.2s ease;
+    position: relative;
+    z-index: 1;
+  }
+  #balance img {
+    height: 18px;
+    vertical-align: middle;
+    margin-left: 6px;
+  }
+  .pulse {
+    animation: pulse 1s ease-out;
+  }
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+
+  h2 {
+    font-size: 1.4em;
+    margin: 40px 0 15px;
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+    letter-spacing: 1px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.5);
+    animation: fadeIn 1.2s ease;
+  }
+  h2.free { background: rgba(34,197,94,0.15); color: var(--free); border: 1px solid var(--free); }
+  h2.cheap { background: rgba(59,130,246,0.15); color: var(--cheap); border: 1px solid var(--cheap); }
+  h2.standard { background: rgba(168,85,247,0.15); color: var(--standard); border: 1px solid var(--standard); }
+  h2.premium { background: rgba(250,204,21,0.15); color: var(--premium); border: 1px solid var(--premium); }
+  h2.imposible { background: rgba(0, 16, 247, 0.15); color: var(--imposible); border: 1px solid var(--imposible); }
+  
+
+  .shop {
+    display: grid;
+    grid-template-columns: repeat(auto-fill,minmax(180px,1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .item {
+    background: var(--card);
+    padding: 18px;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    transition: transform .3s ease, box-shadow .3s ease;
+    animation: fadeIn 1.2s ease;
+  }
+  .item:hover {
+    transform: translateY(-8px) rotateX(5deg) rotateY(-5deg);
+    box-shadow: 0 0 25px var(--glow);
+  }
+  .item img {
+    width: 110px;
+    height: 110px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 2px solid var(--glow);
+    margin-bottom: 12px;
+    box-shadow: 0 0 15px rgba(74,163,255,.6);
+  }
+
+  .price {
+    margin: 10px 0;
+    font-weight: bold;
+    font-size: 1.05em;
+    color: var(--muted);
+  }
+  .price img {
+    height: 16px;
+    vertical-align: middle;
+    margin-left: 5px;
+  }
+
+  button {
+    background: linear-gradient(90deg,#3b82f6,#22c55e);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform .2s, box-shadow .2s;
+    position: relative;
+    overflow: hidden;
+  }
+  button::after {
+    content:"";
+    position:absolute;
+    top:0; left:-50%;
+    width:50%; height:100%;
+    background: rgba(255,255,255,.25);
+    transform: skewX(-25deg);
+    transition: left .5s;
+  }
+  button:hover::after { left:120%; }
+  button:hover { transform: scale(1.05); box-shadow: 0 0 12px var(--glow); }
+  button:disabled {
+    background: #555;
+    cursor: not-allowed;
+    opacity: 0.7;
+    box-shadow: none;
+  }
+  .item.equipped {
+    border: 2px solid lime;
+    box-shadow: 0 0 20px lime;
+  }
+
+
+  #home {
+    background: var(--glow);
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    box-shadow: 0 0 18px var(--glow);
+    z-index: 2;
+  }
+  #home:hover { background: #3a62d2; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  img.blueRook {
+    height: 16px;
+    vertical-align: middle;
+    margin-left: 5px;
+    height: 16px;
+    width: 16px;
+    filter: drop-shadow(0 0 2px rgba(0,0,0,0.5));
+    display: inline-block;
+    transform: translateY(2px);
+  }
+  /* Banners */
+  .banner {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 14px 22px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    cursor: pointer;
+    z-index: 9999;
+    animation: floatIn 0.4s ease-out;
+  }
+  @keyframes floatIn {
+    from { opacity: 0; transform: translate(-50%, 20px); }
+    to   { opacity: 1; transform: translate(-50%, 0); }
+  }
+  #joinBanner { background: #28a745; color: white; }
+  #challengeBanner { background: #ffc107; color: black; cursor: default; }
+  .banner button {
+    margin-left: 8px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .banner #green { background: #28a745; color: white; }
+  .banner #red { background: #ff4d4d; color: white; }
+  </style>
 </style>
 </head>
 <body>
 <h1>Avatar Shop</h1>
+<div id="balance">Balance: <span id="balanceValue">Loading...</span> <img class="blueRook" src="files/img/-s-blue-rook.png"></div>
 <button id="home" onclick="window.location.href='home.html'">Go Home</button>
-<div class="shop" id="shop"></div>
+
+<div id="shopContainer"></div>
+<audio id="challengeSound" src="files/sound/challenge.wav" preload="auto"></audio>
+<audio id="acceptedSound" src="files/sound/accepted.wav" preload="auto"></audio>
 
 <script type="module">
 const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY"; 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let currentUserId = null;
 
-async function checkMaintenance() {
-  const { data, error } = await supabaseClient
-    .from("settings")
-    .select("maintenance, message")
-    .limit(1)
+async function acceptChallenge(matchId) {
+  const { data: match } = await supabaseClient
+    .from("match_requests")
+    .select("*")
+    .eq("id", matchId)
+    .single();
+  if (!match) return;
+
+  const white = Math.random() < 0.5 ? match.challenger_id : match.challenged_id;
+  const black = (white === match.challenger_id) ? match.challenged_id : match.challenger_id;
+
+  const { data: game } = await supabaseClient
+    .from("games")
+    .insert({ white_id: white, black_id: black, fen: "start" })
+    .select()
     .single();
 
-  if (data?.maintenance) {
-    window.location.href = "maintenance.html";
-  }
+  await supabaseClient
+    .from("match_requests")
+    .update({ status: "accepted", game_id: game.id })
+    .eq("id", matchId);
+
+  document.getElementById("challengeBanner")?.remove();
+  window.location.href = `play-game.html?game=${game.id}`;
 }
-checkMaintenance();
 
-// Load shop
-async function loadShop() {
-  console.log("Loading shop...");
+async function declineChallenge(matchId) {
+  await supabaseClient
+    .from("match_requests")
+    .update({ status: "declined" })
+    .eq("id", matchId);
+  document.getElementById("challengeBanner")?.remove();
+}
 
-  // Auth check
-  const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-  if (userError || !user) {
-    console.error("User error:", userError);
-    alert("Login required");
-    window.location.href = "index.html";
-    return;
+async function checkAuth() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+      window.location.href = "index.html";
+      return;
+    }
+    currentUserId = user.id;
+
+    // Banned check
+    const { data: profile } = await supabaseClient.from("profiles").select("banned").eq("id", user.id).single();
+    if (profile && profile.banned) {
+      window.location.href = "banned.html";
+      return;
+    }
+
+    // Maintenance check
+    const { data: settings } = await supabaseClient.from("settings").select("maintenance").limit(1).single();
+    if (settings && settings.maintenance) {
+      window.location.href = "maintenance.html";
+      return;
+    }
   }
 
-  // Get owned avatars
-  const { data: owned, error: ownedError } = await supabaseClient
-    .from("owned_avatars")
-    .select("avatar_path")
-    .eq("user_id", user.id);
+  
 
+  checkAuth();
+  
+
+function getCategory(price) {
+  if (price === 0) return "free";
+  if (price <= 50) return "cheap";
+  if (price <= 200) return "standard";
+  if (price <= 500) return "premium";
+  return "imposible";
+}
+
+async function loadShop() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) { window.location.href = "index.html"; return; }
+
+  const { data: profile } = await supabaseClient.from("profiles").select("blue_rooks").eq("id", user.id).single();
+  document.getElementById("balanceValue").textContent = profile?.blue_rooks ?? 0;
+
+  const { data: owned } = await supabaseClient.from("owned_avatars").select("avatar_path").eq("user_id", user.id);
   const ownedSet = new Set((owned || []).map(a => a.avatar_path));
 
-  // Fetch shop items
-  const { data: shopItems, error: shopError } = await supabaseClient
-    .from("shop_items")
-    .select("id, file_name, price, category");
+  const { data: shopItems } = await supabaseClient.from("shop_items").select("id, file_name, price");
+  shopItems.sort((a,b)=>a.price-b.price);
 
-  if (shopError) {
-    console.error("Shop load error:", shopError);
-    return;
-  }
+  const grouped = {};
+  shopItems.forEach(item=>{
+    const cat=getCategory(item.price);
+    if(!grouped[cat]) grouped[cat]=[];
+    grouped[cat].push(item);
+  });
 
-  const shopDiv = document.getElementById("shop");
-  shopDiv.innerHTML = "";
-
-  shopItems.forEach(item => {
-    const publicUrl = `https://ruevzmnbhoowmuleeqjb.supabase.co/storage/v1/object/public/avatars/buyable/${item.file_name}`;
-    const alreadyOwned = ownedSet.has(`buyable/${item.file_name}`);
-
-    const div = document.createElement("div");
-    div.className = "item";
-    div.innerHTML = `
-      <img src="${publicUrl}" alt="${item.file_name}">
-      <div class="price">${item.price} <img src="files/img/-s-blue-rook.png" height="16"></div>
-      <div class="category">Category: ${item.category}</div>
-      <button ${alreadyOwned ? "disabled" : ""} 
-        onclick="buyAvatar('${item.file_name}', ${item.price}, this)">
-        ${alreadyOwned ? "Owned" : "Buy"}
-      </button>
-    `;
-    shopDiv.appendChild(div);
+  const shopContainer=document.getElementById("shopContainer");
+  shopContainer.innerHTML="";
+  Object.keys(grouped).forEach(cat=>{
+    const h2=document.createElement("h2"); h2.textContent=cat.toUpperCase(); h2.className=cat; shopContainer.appendChild(h2);
+    const section=document.createElement("div"); section.className="shop";
+    grouped[cat].forEach(item=>{
+      const url=`${SUPABASE_URL}/storage/v1/object/public/avatars/buyable/${item.file_name}`;
+      const owned=ownedSet.has(`buyable/${item.file_name}`);
+      const div=document.createElement("div");
+      div.className="item";
+      div.innerHTML=`
+        <img src="${url}" alt="${item.file_name}">
+        <div class="price">${item.price} <img class="blueRook" src="files/img/-s-blue-rook.png"></div>
+        <button ${owned?"disabled":""} onclick="buyAvatar('${item.file_name}',${item.price},this)">
+          ${owned?"Owned":"Buy"}
+        </button>
+      `;
+      section.appendChild(div);
+    });
+    shopContainer.appendChild(section);
   });
 }
 
-window.buyAvatar = async function(fileName, price, btn) {
-  btn.disabled = true;
-  console.log(`Buying avatar: ${fileName} for ${price}`);
-
-  const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-  if (userError || !user) {
-    alert("Login required");
-    window.location.href = "index.html";
-    return;
-  }
-
-  // Get balance
-  const { data: profile, error: profileError } = await supabaseClient
-    .from("profiles")
-    .select("blue_rooks")
-    .eq("id", user.id)
-    .single();
-
-  if (profileError || !profile) {
-    alert("Profile error");
-    btn.disabled = false;
-    return;
-  }
-
-  if ((profile.blue_rooks ?? 0) < price) {
-    alert("Not enough Blue Rooks!");
-    btn.disabled = false;
-    return;
-  }
-
-  // Deduct and add avatar
-  const updateRes = await supabaseClient
-    .from("profiles")
-    .update({ blue_rooks: profile.blue_rooks - price })
-    .eq("id", user.id);
-
-  if (updateRes.error) {
-    alert("Failed to update balance.");
-    btn.disabled = false;
-    return;
-  }
-
-  const insertRes = await supabaseClient
-    .from("owned_avatars")
-    .insert({ user_id: user.id, avatar_path: `buyable/${fileName}` });
-
-  if (insertRes.error) {
-    alert("Failed to add avatar.");
-    btn.disabled = false;
-    return;
-  }
-
+window.buyAvatar=async function(fileName,price,btn){
+  btn.disabled=true;
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  const { data: profile } = await supabaseClient.from("profiles").select("blue_rooks").eq("id", user.id).single();
+  if((profile.blue_rooks??0)<price){alert("Not enough Blue Rooks!");btn.disabled=false;return;}
+  await supabaseClient.from("profiles").update({blue_rooks:profile.blue_rooks-price}).eq("id",user.id);
+  await supabaseClient.from("owned_avatars").insert({user_id:user.id,avatar_path:`buyable/${fileName}`});
+  document.getElementById("balance").classList.add("pulse");
+  setTimeout(()=>document.getElementById("balance").classList.remove("pulse"),1000);
   alert("Avatar purchased!");
-  await loadShop();
+  loadShop();
 };
 
-// Run shop on page load
+function listenForMatchUpdates() {
+  supabaseClient.channel("match_updates")
+    .on("postgres_changes", { event: "*", schema: "public", table: "match_requests" }, payload => {
+      const match = payload.new;
+      if (!match) return;
+
+      if (match.challenger_id === currentUserId && match.status === "accepted" && match.game_id) {
+        playSound("acceptedSound");
+        showJoinBanner(match.game_id);
+      }
+
+      if (match.challenged_id === currentUserId && match.status === "pending") {
+        playSound("challengeSound");
+        showChallengeBanner(match.id, match.challenger_id);
+      }
+    })
+    .subscribe();
+}
+
+function playSound(soundId) {
+  const sound = document.getElementById(soundId);
+  if (!sound) return;
+  sound.currentTime = 0;
+  sound.play().catch(() => {});
+}
+
+function showJoinBanner(gameId) {
+  if (document.getElementById("joinBanner")) return;
+  const banner = document.createElement("div");
+  banner.id = "joinBanner";
+  banner.className = "banner";
+  banner.textContent = "✅ Your challenge was accepted! Click to join the game.";
+  banner.onclick = () => {
+    window.location.href = `play-game.html?game=${gameId}`;
+  };
+  document.body.appendChild(banner);
+}
+
+async function showChallengeBanner(matchId, challengerId) {
+  if (document.getElementById("challengeBanner")) return;
+  const { data: challenger } = await supabaseClient
+    .from("profiles")
+    .select("username")
+    .eq("id", challengerId)
+    .single();
+
+  const banner = document.createElement("div");
+  banner.id = "challengeBanner";
+  banner.className = "banner";
+  banner.innerHTML = `🎯 Challenge from <b>${challenger?.username || "Unknown"}</b> 
+    <button onclick="acceptChallenge('${matchId}')" id="green">Accept</button>
+    <button onclick="declineChallenge('${matchId}')" id="red">Decline</button>`;
+  document.body.appendChild(banner);
+}
+
+
+
 loadShop();
 </script>
-
-
-
+</body>
+</html>
