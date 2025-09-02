@@ -6,171 +6,302 @@
 <meta name="description" content="Join the Blue Chess.in online lobby to challenge friends and players around the world. Start your match instantly.">
 <link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background-color: #e9f4ff;
-        margin: 0;
-        padding: 0;
-    }
-    h1 {
-        text-align: center;
-        padding: 20px;
-        background: #006dd9;
-        color: white;
-        margin: 0;
-    }
-    .container {
-        max-width: 800px;
-        margin: auto;
-        padding: 20px;
-    }
-    .player-list {
-        background: white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    .player {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 8px 0;
-        border-bottom: 1px solid #ddd;
-    }
-    .player:last-child {
-        border-bottom: none;
-    }
-    button {
-        padding: 6px 12px;
-        background: #006dd9;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-    button:disabled {
-        background: gray;
-        cursor: not-allowed;
-    }
-    /* Banners */
-    .banner {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 12px 20px;
-        border-radius: 6px;
-        font-size: 16px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        cursor: pointer;
-        z-index: 9999;
-    }
-    #home {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        padding: 10px 15px;
-        background: #3e9eff;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-    #joinBanner { background: #28a745; color: white; }
-    #challengeBanner { background: #ffc107; color: black; cursor: default; }
-    .banner button { margin-left: 8px; }
+  :root {
+    --bg:#0b1f3a;
+    --panel:#0f2b55;
+    --muted:#aac7ff;
+    --brand:#4aa3ff;
+    --danger:#ff4d4d;
+    --ok:#22c55e;
+    --text:#e6f0ff;
+    --shadow:rgba(74,163,255,.6);
+  }
+  body {
+    font-family: Inter, sans-serif;
+    background: linear-gradient(120deg,#02122a,#0f2b55);
+    margin: 0;
+    color: var(--text);
+    overflow-x: hidden;
+  }
+  #particles-js {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    top: 0;
+    left: 0;
+  }
+  /* Title Bar */
+.title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  padding: 20px;
+  margin: 0;
+  background: linear-gradient(90deg, #003467, #0084a4, #22c55e);
+  background-size: 200% 200%;
+  animation: gradientShift 6s infinite alternate;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+.title-bar h1 {
+  margin: 0;
+  font-size: 2em;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 1px;
+  text-shadow: 0 0 8px rgba(255,255,255,.6);
+}
+
+.title-logo {
+  height: 50px;
+  width: auto;
+  filter: drop-shadow(0 0 8px rgba(74,163,255,.8));
+}
+
+#goHome {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    padding: 10px 15px;
+    background: var(--brand);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 0 0 12px var(--shadow);
+    transition: background .2s, transform .2s;
+}
+
+  @keyframes gradientShift {
+    from { background-position: 0% 50%; }
+    to { background-position: 100% 50%; }
+  }
+  .container {
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 20px;
+  }
+  .player-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  .player-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    padding: 12px 18px;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(0,0,0,.3);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .player-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 25px var(--shadow);
+  }
+  .player-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  .player-info img {
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 2px solid var(--brand);
+    box-shadow: 0 0 10px var(--shadow);
+  }
+  .details {
+    display: flex;
+    flex-direction: column;
+  }
+  .username {
+    font-size: 1.2em;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .badges {
+    display: flex;
+    gap: 5px;
+  }
+  .badges img {
+    height: 22px;
+    border-radius: 4px;
+    background: #fff2;
+    padding: 2px 2px;
+    box-shadow: 0 0 8px var(--shadow);
+    width: auto;
+  }
+  .stats {
+    font-size: 0.9em;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+  .challenge-btn {
+    padding: 10px 16px;
+    background: var(--ok);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background .2s, transform .2s;
+  }
+  .challenge-btn:hover {
+    background: #1aa34a;
+    transform: scale(1.05);
+  }
+  .challenge-btn:disabled {
+    background: gray;
+    cursor: not-allowed;
+  }
+  #home {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    padding: 10px 15px;
+    background: var(--brand);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 0 0 12px var(--shadow);
+    transition: background .2s, transform .2s;
+  }
+  #home:hover {
+    background: #2d8cff;
+    transform: scale(1.05);
+  }
+  /* Banners */
+  .banner {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 14px 22px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    cursor: pointer;
+    z-index: 9999;
+    animation: floatIn 0.4s ease-out;
+  }
+  @keyframes floatIn {
+    from { opacity: 0; transform: translate(-50%, 20px); }
+    to   { opacity: 1; transform: translate(-50%, 0); }
+  }
+  #joinBanner { background: #28a745; color: white; }
+  #challengeBanner { background: #ffc107; color: black; cursor: default; }
+  .banner button {
+    margin-left: 8px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .banner #green { background: #28a745; color: white; }
+  .banner #red { background: #ff4d4d; color: white; }
 </style>
 </head>
 <body>
 
-<h1>Blue Chess.in - Online Lobby</h1>
-<button id="home" onclick="window.location.href='home.html'">Go Home</button>
+<div id="particles-js"></div>
+
+<!-- Title Bar -->
+<header class="title-bar">
+    <button id="goHome" onclick="window.location.href='home.html'">Go Home</button>
+  <img src="files/img/-w-logo.png" alt="BlueChess.in" class="title-logo">
+  <h1> -   Online Lobby</h1>
+</header>
+
+
 <div class="container">
-    <div class="player-list" id="playerList">
-        <p>Loading players...</p>
-    </div>
+  <div class="player-list" id="playerList">
+    <p>Loading players...</p>
+  </div>
 </div>
 
-<!-- Two separate sounds -->
 <audio id="challengeSound" src="files/sound/challenge.wav" preload="auto"></audio>
 <audio id="acceptedSound" src="files/sound/accepted.wav" preload="auto"></audio>
 
 <script>
+/* Supabase setup */
 const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUserId = null;
 
-// Check maintenance
-async function checkMaintenance() {
-  const { data, error } = await supabaseClient
-    .from("settings")
-    .select("maintenance, message")
-    .limit(1)
-    .maybeSingle();
-
-  if (data?.maintenance) {
-    window.location.href = "maintenance.html";
-  }
-}
-checkMaintenance();
-
-// Init
 (async function init() {
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) {
     window.location.href = "index.html";
     return;
   }
-
-  // ✅ check ban
-  const { data: profileRow } = await supabaseClient
-    .from("profiles")
-    .select("banned")
-    .eq("id", user.id)
-    .single();
-
-  if (profileRow?.banned) {
-    window.location.href = "banned.html";
-    return;
-  }
-
   currentUserId = user.id;
   loadPlayers();
   listenForMatchUpdates();
 })();
 
-// Load players
 async function loadPlayers() {
-  const { data: players } = await supabaseClient.from("profiles").select("*");
+  const { data: players } = await supabaseClient
+    .from("profiles")
+    .select("id, username, profile, owner, dev, admin, coadmin, elo, blue_rooks");
+
   const container = document.getElementById("playerList");
   container.innerHTML = "";
 
   players.forEach(p => {
     if (p.id === currentUserId) return;
+    const avatarUrl = p.profile 
+      ? `${SUPABASE_URL}/storage/v1/object/public/avatars/${p.profile}`
+      : "files/img/profiles/default-avatar.png";
+
+    const badges = [];
+    const badgeFolder = "files/img/badges/";
+    if (p.owner) badges.push(`<img src="${badgeFolder}owner.png">`);
+    if (p.dev) badges.push(`<img src="${badgeFolder}dev.png">`);
+    if (p.admin) badges.push(`<img src="${badgeFolder}admin.png">`);
+    if (p.coadmin) badges.push(`<img src="${badgeFolder}coadmin.png">`);
+
     const div = document.createElement("div");
-    div.className = "player";
+    div.className = "player-card";
     div.innerHTML = `
-      <span>${p.username || "Unknown"}</span>
-      <button onclick="sendChallenge('${p.id}')">Challenge</button>
+      <div class="player-info">
+        <img src="${avatarUrl}" alt="Profile">
+        <div class="details">
+          <div class="username">${p.username || "Unknown"}
+            <span class="badges">${badges.join("")}</span>
+          </div>
+          <div class="stats">ELO: ${p.elo || 1200} • 🏰 ${p.blue_rooks || 0}</div>
+        </div>
+      </div>
+      <button class="challenge-btn" onclick="sendChallenge('${p.id}')">Challenge</button>
     `;
     container.appendChild(div);
   });
 }
 
-// Send challenge
 async function sendChallenge(opponentId) {
-  await supabaseClient.from("match_requests").insert({
-    challenger_id: currentUserId,
-    challenged_id: opponentId,
-    status: "pending"
-  });
+  await supabaseClient
+    .from("match_requests")
+    .insert({ challenger_id: currentUserId, challenged_id: opponentId, status: "pending" });
   alert("Challenge sent!");
 }
 
-// Listen for updates
 function listenForMatchUpdates() {
   supabaseClient.channel("match_updates")
     .on("postgres_changes", { event: "*", schema: "public", table: "match_requests" }, payload => {
@@ -190,28 +321,27 @@ function listenForMatchUpdates() {
     .subscribe();
 }
 
-// Play sound
 function playSound(soundId) {
   const sound = document.getElementById(soundId);
   if (!sound) return;
   sound.currentTime = 0;
-  sound.play().catch(() => console.warn("Autoplay blocked"));
+  sound.play().catch(() => {});
 }
 
-// Show banners
 function showJoinBanner(gameId) {
   if (document.getElementById("joinBanner")) return;
   const banner = document.createElement("div");
   banner.id = "joinBanner";
   banner.className = "banner";
   banner.textContent = "✅ Your challenge was accepted! Click to join the game.";
-  banner.onclick = () => window.location.href = `play-game.html?game=${gameId}`;
+  banner.onclick = () => {
+    window.location.href = `play-game.html?game=${gameId}`;
+  };
   document.body.appendChild(banner);
 }
 
 async function showChallengeBanner(matchId, challengerId) {
   if (document.getElementById("challengeBanner")) return;
-
   const { data: challenger } = await supabaseClient
     .from("profiles")
     .select("username")
@@ -221,15 +351,18 @@ async function showChallengeBanner(matchId, challengerId) {
   const banner = document.createElement("div");
   banner.id = "challengeBanner";
   banner.className = "banner";
-  banner.innerHTML = `🎯 You have received a challenge from ${challenger?.username || "Unknown"} 
-    <button onclick="acceptChallenge('${matchId}')">Accept</button>
-    <button onclick="declineChallenge('${matchId}')">Decline</button>`;
+  banner.innerHTML = `🎯 Challenge from <b>${challenger?.username || "Unknown"}</b> 
+    <button onclick="acceptChallenge('${matchId}')" id="green">Accept</button>
+    <button onclick="declineChallenge('${matchId}')"id="red">Decline</button>`;
   document.body.appendChild(banner);
 }
 
-// Accept / Decline
 async function acceptChallenge(matchId) {
-  const { data: match } = await supabaseClient.from("match_requests").select("*").eq("id", matchId).single();
+  const { data: match } = await supabaseClient
+    .from("match_requests")
+    .select("*")
+    .eq("id", matchId)
+    .single();
   if (!match) return;
 
   const white = Math.random() < 0.5 ? match.challenger_id : match.challenged_id;
@@ -241,21 +374,36 @@ async function acceptChallenge(matchId) {
     .select()
     .single();
 
-  await supabaseClient.from("match_requests").update({ status: "accepted", game_id: game.id }).eq("id", matchId);
+  await supabaseClient
+    .from("match_requests")
+    .update({ status: "accepted", game_id: game.id })
+    .eq("id", matchId);
 
   document.getElementById("challengeBanner")?.remove();
   window.location.href = `play-game.html?game=${game.id}`;
 }
 
 async function declineChallenge(matchId) {
-  await supabaseClient.from("match_requests").update({ status: "declined" }).eq("id", matchId);
+  await supabaseClient
+    .from("match_requests")
+    .update({ status: "declined" })
+    .eq("id", matchId);
   document.getElementById("challengeBanner")?.remove();
 }
+
+/* Particles background */
+particlesJS("particles-js", {
+  particles: {
+    number: { value: 100, density: { enable: true, value_area: 800 } },
+    color: { value: "#4aa3ff" },
+    shape: { type: "circle" },
+    opacity: { value: 0.5 },
+    size: { value: 3 },
+    line_linked: { enable: true, distance: 150, color: "#4aa3ff", opacity: 0.4, width: 1 },
+    move: { enable: true, speed: 2 }
+  },
+  retina_detect: true
+});
 </script>
-
-
 </body>
 </html>
-
-
-
