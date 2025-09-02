@@ -1,138 +1,235 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>Blue Chess.in – Sign Up</title>
   <meta name="description" content="Create your free account on Blue Chess.in to play chess online, track your stats, and challenge friends.">
-  <link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
+  <link rel="icon" href="files/img/-s-logo.png" type="image/png">
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+
   <style>
+    :root {
+      --bg:#0b1f3a; --panel:#0f2b55; --muted:#aac7ff;
+      --brand:#4aa3ff; --danger:#ff4d4d; --ok:#22c55e;
+      --text:#e6f0ff; --input-bg:rgba(0,0,0,.35);
+      --card-bg:rgba(255,255,255,.06); --border:rgba(255,255,255,.1);
+      --shadow:rgba(74,163,255,.4);
+      --particle:#4aa3ff;
+    }
+    body.light {
+      --bg:#f0f4ff; --panel:#ffffff; --muted:#445c7a;
+      --brand:#1a73e8; --danger:#d93025; --ok:#188038;
+      --text:#111; --input-bg:#fff;
+      --card-bg:#fff; --border:#ccc;
+      --shadow:rgba(26,115,232,.3);
+      --particle:#f4c542;
+    }
+
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      display: flex;
-      height: 100vh;
+      margin:0; font-family:Inter, sans-serif;
+      background:linear-gradient(120deg,var(--bg),var(--panel));
+      color:var(--text); display:flex; min-height:100vh;
+      overflow:hidden;
+      transition:background .5s, color .5s;
     }
-    .left {
-      flex: 1;
-      background: #f0f0f0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+
+   #particles-js {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      top: 0;
+      left: 0;
     }
-    .left h1 {
-      font-size: 24px;
-      margin-bottom: 20px;
+
+    .shell { display:grid; grid-template-columns:1fr 1fr; width:100%; height:100vh; }
+    .left, .right { display:flex; align-items:center; justify-content:center; padding:20px; }
+
+    /* Signup card */
+    .card {
+      background:var(--card-bg); border:1px solid var(--border);
+      border-radius:16px; padding:30px; width:360px;
+      text-align:center; box-shadow:0 0 20px var(--shadow);
+      animation:glow 3s infinite alternate;
+      transition:all .4s;
+      position:relative; z-index:2;
     }
-    .left input {
-      padding: 10px;
-      margin-bottom: 10px;
-      width: 220px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+    .logo { width:220px; margin:0 auto 18px; display:block; transition:opacity .3s; }
+    h2 { margin:0 0 16px; font-size:22px; }
+
+    .input-group { position:relative; width:100%; margin:8px 0; }
+    input {
+      width:85%; padding:12px 40px 12px 12px;
+      border-radius:8px; border:1px solid var(--border);
+      background:var(--input-bg); color:var(--text);
+      font-size:15px; transition:all .3s;
     }
-    .left button {
-      width: 220px;
-      padding: 12px;
-      margin-top: 10px;
-      font-size: 16px;
-      cursor: pointer;
-      background: #4A90E2;
-      color: white;
-      border: none;
-      border-radius: 5px;
+    .toggle-eye {
+      position:absolute; right:10px; top:50%;
+      transform:translateY(-50%); cursor:pointer;
+      color:var(--muted); font-size:22px;
     }
-    .left button:hover {
-      background: #357ABD;
+
+    button {
+      margin-top:10px; width:100%; padding:12px;
+      border:0; border-radius:8px; cursor:pointer;
+      font-weight:600; font-size:15px; transition:background .3s;
     }
-    .right {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: white;
+    .btn-signup { background:var(--brand); color:#fff; }
+    .btn-login { background:var(--ok); color:#fff; }
+
+    .msg { font-size:13px; color:var(--muted); margin-top:8px; }
+
+    .divider { margin:16px 0; display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--muted); }
+    .divider::before, .divider::after { content:""; flex:1; height:1px; background:var(--border); margin:0 10px; }
+
+    /* Toggle */
+    .theme-toggle { margin-top:18px; display:flex; justify-content:center; }
+    .switch {
+      position:relative; width:60px; height:30px; background:var(--border);
+      border-radius:50px; cursor:pointer; transition:background .3s;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 6px; box-sizing:border-box;
     }
-    .right img {
-      max-width: 90%;
-      height: auto;
+    .switch span { font-size:16px; pointer-events:none; transition:opacity .3s; }
+    .switch .thumb {
+      position:absolute; top:3px; left:3px;
+      width:24px; height:24px; background:var(--brand);
+      border-radius:50%; transition:all .3s;
     }
-    .logo {
-        width: 250px;
-        margin: 0 auto 20px;
-        display: block;
+    .switch.active .thumb { transform:translateX(30px); background:gold; }
+    .switch.active .moon { opacity:0.3; }
+    .switch.active .sun { opacity:1; }
+    .moon { opacity:1; }
+    .sun { opacity:0.3; }
+
+    /* Chessboard image (now on LEFT) */
+    .left img {
+      max-width:85%; border-radius:14px;
+      box-shadow:0 0 20px var(--shadow);
+      animation:glow 3s infinite alternate;
     }
+
+    @keyframes glow { from{box-shadow:0 0 20px var(--shadow);} to{box-shadow:0 0 40px var(--shadow);} }
+    @media(max-width:900px) { .shell { grid-template-columns:1fr; } .left { display:none; } }
   </style>
 </head>
 <body>
+  <div id="particles-js"></div>
 
-<div class="left">
-<img src="files/img/-w-logo.png" alt="Blue Chess.in" class="logo">
-  <h1>Create an Account!</h1>
-  <input type="text" id="username" placeholder="Username">
-  <input type="email" id="email" placeholder="Email">
-  <input type="password" id="password" placeholder="Password">
-  <input type="password" id="confirm-password" placeholder="Confirm Password">
-  <button onclick="signUp()">Sign Up</button>
-  (or)
-  <button onclick="window.location.href='index.html'">Sign In</button>
-</div>
+  <div class="shell">
+    <!-- Chessboard on LEFT -->
+    <div class="left">
+      <img src="files/img/chessboard1.png" alt="Chessboard">
+    </div>
 
-<div class="right">
-  <img src="files/img/chessboard2.png" alt="Chessboard">
-</div>
+    <!-- Signup card on RIGHT -->
+    <div class="right">
+      <div class="card">
+        <img id="logo" src="files/img/-w-logo.png" alt="Blue Chess.in" class="logo">
+        <h2>📝 Create Your Account</h2>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY"; // your full anon key
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        <div class="input-group">
+          <input id="name" type="text" placeholder="Full Name">
+        </div>
+        <div class="input-group">
+          <input id="email" type="email" placeholder="Email">
+        </div>
+        <div class="input-group">
+          <input id="password" type="password" placeholder="Password">
+          <span id="togglePassword" class="material-symbols-outlined toggle-eye">visibility</span>
+        </div>
+        <div class="input-group">
+          <input id="confirm" type="password" placeholder="Confirm Password">
+          <span id="toggleConfirm" class="material-symbols-outlined toggle-eye">visibility</span>
+        </div>
 
-  const { data: settings } = await supabaseClient.from("settings").select("maintenance").single();
-if (settings.maintenance) {
-  window.location.href = "maintenance.html";
-  return;
-}
+        <button class="btn-signup" onclick="signUp()">Sign Up</button>
+        <div class="divider">OR</div>
+        <button class="btn-login" onclick="window.location.href='index.html'">Back to Login</button>
+        <div id="message" class="msg"></div>
 
-async function signUp() {
-    const username = document.getElementById("username").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-    const confirmPassword = document.getElementById("confirm-password").value;
+        <div class="theme-toggle">
+          <div id="themeSwitch" class="switch">
+            <span class="moon">🌙</span>
+            <span class="sun">☀️</span>
+            <div class="thumb"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    if (password !== confirmPassword) {
-        alert("Passwords do not match!");
-        return;
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY"; 
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Eye toggles
+    function attachToggle(inputId, toggleId) {
+      const input = document.getElementById(inputId);
+      const toggle = document.getElementById(toggleId);
+      toggle.addEventListener("click", () => {
+        const isPassword = input.type === "password";
+        input.type = isPassword ? "text" : "password";
+        toggle.textContent = isPassword ? "visibility_off" : "visibility";
+      });
+    }
+    attachToggle("password","togglePassword");
+    attachToggle("confirm","toggleConfirm");
+
+    // Theme
+    const themeSwitch = document.getElementById("themeSwitch");
+    function applyTheme(isLight) {
+      if (isLight) {
+        document.body.classList.add("light");
+        document.getElementById("logo").src = "files/img/-w-logo-light.png";
+        themeSwitch.classList.add("active");
+      } else {
+        document.body.classList.remove("light");
+        document.getElementById("logo").src = "files/img/-w-logo.png";
+        themeSwitch.classList.remove("active");
+      }
+      localStorage.setItem("theme", isLight ? "light" : "dark");
+    }
+    themeSwitch.addEventListener("click", () => applyTheme(!document.body.classList.contains("light")));
+    (function(){ applyTheme(localStorage.getItem("theme")==="light"); })();
+
+    // Signup
+    async function signUp() {
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const confirm = document.getElementById("confirm").value.trim();
+      const msg = document.getElementById("message");
+
+      if (!name || !email || !password || !confirm) return msg.textContent="❌ All fields are required";
+      if (password !== confirm) return msg.textContent="❌ Passwords do not match";
+
+      const { error } = await supabaseClient.auth.signUp({ email, password, options:{ data:{ name } }});
+      msg.textContent = error ? "❌ " + error.message : "✅ Account created! Check your email.";
     }
 
-    // Create user
-    const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
-        email,
-        password
-    });
-
-    if (signUpError) {
-        alert("Signup failed: " + signUpError.message);
-        return;
-    }
-
-    // Update profiles table with username
-    const userId = signUpData.user.id;
-    const { error: updateError } = await supabaseClient
-        .from("profiles")
-        .update({ username })
-        .eq("id", userId);
-
-    if (updateError) {
-        alert("Profile update failed: " + updateError.message);
-        return;
-    }
-
-    alert("Signup successful! Please log in.");
-    window.location.href = "index.html";
-}
-</script>
-
-
+    // Particles.js config
+  particlesJS("particles-js", {
+    particles: {
+      number: { value: 80, density: { enable: true, value_area: 800 } },
+      color: { value: "#4aa3ff" },
+      shape: { type: "circle" },
+      opacity: { value: 0.5 },
+      size: { value: 3 },
+      line_linked: { enable: true, distance: 150, color: "#4aa3ff", opacity: 0.4, width: 1 },
+      move: { enable: true, speed: 2 }
+    },
+    interactivity: {
+      detect_on: "canvas",
+      events: { onhover: { enable: true, mode: "repulse" } }
+    },
+    retina_detect: true
+  });
+  </script>
 </body>
 </html>
-
-
