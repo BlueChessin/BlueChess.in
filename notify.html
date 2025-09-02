@@ -6,183 +6,242 @@
 <link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-    body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background: #e9f4ff;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        color: #333;
-    }
-    .card {
-        background: white;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-        text-align: center;
-        width: 420px;
-    }
-    h1 {
-        margin-top: 0;
-        color: #004890;
-    }
-    .player {
-        margin: 15px 0;
-        font-size: 18px;
-        font-weight: bold;
-    }
-    .player img.badge {
-        height: 18px;
-        margin-left: 4px;
-        vertical-align: middle;
-    }
-    .reason {
-        margin: 20px 0;
-        font-size: 16px;
-        color: #555;
-    }
-    .elo-change, .currency-change {
-        font-size: 16px;
-        margin: 10px 0;
-    }
-    .elo-change span {
-        font-weight: bold;
-    }
-    .currency-change img {
-        height: 18px;
-        vertical-align: middle;
-        margin-right: 5px;
-    }
-    button {
-        background: #004890;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 16px;
-    }
-    button:hover {
-        background: #003370;
-    }
+  :root {
+    --bg: #0b1f3a;
+    --panel: rgba(15, 43, 85, 0.85);
+    --brand: #4aa3ff;
+    --winner: #ffd700;
+    --loser: #ff4d4d;
+    --ok: #22c55e;
+    --danger: #e63946;
+    --text: #e6f0ff;
+    --shadow: rgba(74, 163, 255, 0.6);
+  }
+  body {
+    margin: 0;
+    font-family: "Inter", sans-serif;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(120deg, #02122a, #0f2b55);
+    color: var(--text);
+  }
+  .card {
+    background: var(--panel);
+    padding: 40px;
+    border-radius: 20px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 0 40px rgba(0,0,0,0.4), 0 0 20px var(--shadow);
+    width: 500px;
+    text-align: center;
+    animation: fadeUp 0.8s ease;
+  }
+  h1 {
+    margin-top: 0;
+    font-size: 2em;
+    color: var(--brand);
+    text-shadow: 0 0 15px var(--shadow);
+  }
+  .player {
+    margin: 20px 0;
+    font-size: 18px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.05);
+  }
+  .player.winner {
+    border: 2px solid var(--winner);
+    box-shadow: 0 0 12px var(--winner);
+  }
+  .player.loser {
+    border: 2px solid var(--loser);
+    box-shadow: 0 0 12px var(--loser);
+  }
+  .player img.avatar {
+    width: 48px; height: 48px;
+    border-radius: 8px;
+    border: 2px solid var(--brand);
+    object-fit: cover;
+    box-shadow: 0 0 12px var(--shadow);
+  }
+  .player img.badge {
+    height: 18px;
+    border-radius: 4px;
+    background: #fff2;
+    padding: 2px;
+    box-shadow: 0 0 6px var(--shadow);
+  }
+  .reason {
+    margin: 20px 0;
+    font-size: 16px;
+    opacity: 0.9;
+    font-style: italic;
+  }
+  .elo-change {
+    margin: 25px 0 15px;
+    text-align: left;
+    font-size: 17px;
+    padding: 15px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.07);
+    box-shadow: 0 0 10px rgba(0,0,0,0.4);
+  }
+  .elo-row {
+    margin: 6px 0;
+    display: flex;
+    justify-content: space-between;
+  }
+  .elo-row span.change.gain { color: var(--ok); font-weight: bold; }
+  .elo-row span.change.loss { color: var(--danger); font-weight: bold; }
+  .currency-change {
+    margin: 20px 0;
+    padding: 15px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.07);
+    font-size: 17px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    text-align: left;
+  }
+  .currency-row {
+    margin: 6px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .currency-row img {
+    height: 20px;
+    margin-right: 8px;
+  }
+  button {
+    margin-top: 25px;
+    background: var(--brand);
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: transform .2s, box-shadow .2s;
+  }
+  button:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 0 15px var(--brand);
+  }
+  @keyframes fadeUp { from {opacity:0; transform:translateY(30px);} to {opacity:1; transform:translateY(0);} }
 </style>
 </head>
 <body>
 
 <div class="card">
-    <h1>Game Over</h1>
-    <div class="player" id="winner">Winner: Loading...</div>
-    <div class="player" id="loser">Loser: Loading...</div>
-    <div class="reason" id="reason">Reason: Loading...</div>
+  <h1>🏁 Game Over</h1>
+  <div class="player winner" id="winner">Winner: Loading...</div>
+  <div class="player loser" id="loser">Loser: Loading...</div>
+  <div class="reason" id="reason">Reason: Loading...</div>
 
-    <div class="elo-change" id="eloChange">Updating Elo...</div>
-    <div class="currency-change" id="blueRookChange">
-        <img src="files/img/blue-rook.png" alt="Blue Rooks"> Updating Blue Rooks...
-    </div>
+  <div class="elo-change" id="eloChange">Updating Elo...</div>
+  <div class="currency-change" id="blueRookChange">Updating Blue Rooks...</div>
 
-    <button onclick="window.location.href='home.html'">Back to Home</button>
+  <button onclick="window.location.href='home.html'">⬅ Back to Home</button>
 </div>
 
 <script>
 const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY"; // replace with your anon key
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 function addBadgesToName(container, profile, label) {
-    container.innerHTML = `${label}: ${profile.username || "Unknown"}`;
-    if (profile.owner)   container.innerHTML += ` <img src="files/img/badges/owner.png" class="badge">`;
-    if (profile.dev)     container.innerHTML += ` <img src="files/img/badges/dev.png" class="badge">`;
-    if (profile.admin)   container.innerHTML += ` <img src="files/img/badges/admin.png" class="badge">`;
-    if (profile.coadmin) container.innerHTML += ` <img src="files/img/badges/coadmin.png" class="badge">`;
+  container.innerHTML = `
+    <img src="https://ruevzmnbhoowmuleeqjb.supabase.co/storage/v1/object/public/avatars/${profile.profile || 'files/img/default-avatar.png'}" class="avatar">
+    ${label}: ${profile.username || "Unknown"}
+  `;
+  if (profile.owner)   container.innerHTML += ` <img src="files/img/badges/owner.png" class="badge">`;
+  if (profile.dev)     container.innerHTML += ` <img src="files/img/badges/dev.png" class="badge">`;
+  if (profile.admin)   container.innerHTML += ` <img src="files/img/badges/admin.png" class="badge">`;
+  if (profile.coadmin) container.innerHTML += ` <img src="files/img/badges/coadmin.png" class="badge">`;
 }
 
 function calculateEloChange(ratingA, ratingB, result, k = 32) {
-    const expectedScore = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
-    const actualScore = result; // 1 = win, 0 = loss, 0.5 = draw
-    return Math.round(k * (actualScore - expectedScore));
+  const expectedScore = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
+  return Math.round(k * (result - expectedScore));
+}
+
+function animateNumber(el, start, end, duration, prefix="", suffix="") {
+  let startTime = null;
+  function step(timestamp) {
+    if (!startTime) startTime = timestamp;
+    let progress = Math.min((timestamp - startTime) / duration, 1);
+    let value = Math.round(start + (end - start) * progress);
+    el.textContent = prefix + value + suffix;
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
 }
 
 (async function init() {
-    const gameId = new URLSearchParams(window.location.search).get("game");
-    if (!gameId) {
-        alert("No game ID provided!");
-        window.location.href = "home.html";
-        return;
-    }
+  const gameId = new URLSearchParams(window.location.search).get("game");
+  if (!gameId) { window.location.href="home.html"; return; }
 
-    const { data: game, error } = await supabaseClient
-        .from("games")
-        .select("*")
-        .eq("id", gameId)
-        .single();
+  const { data: game } = await supabaseClient.from("games").select("*").eq("id", gameId).single();
+  if (!game) { window.location.href="home.html"; return; }
 
-    if (error || !game) {
-        alert("Game not found");
-        window.location.href = "home.html";
-        return;
-    }
+  const { data: whiteProfile } = await supabaseClient.from("profiles")
+    .select("id,username,owner,dev,admin,coadmin,elo,blue_rooks,profile").eq("id", game.white_id).single();
+  const { data: blackProfile } = await supabaseClient.from("profiles")
+    .select("id,username,owner,dev,admin,coadmin,elo,blue_rooks,profile").eq("id", game.black_id).single();
 
-    // Fetch both players
-    const { data: whiteProfile } = await supabaseClient
-        .from("profiles")
-        .select("id, username, owner, dev, admin, coadmin, elo, blue_rooks")
-        .eq("id", game.white_id)
-        .single();
+  const winnerId = game.winner_id;
+  const loserId = (winnerId === game.white_id) ? game.black_id : game.white_id;
+  const winnerProfile = (winnerId === whiteProfile.id) ? whiteProfile : blackProfile;
+  const loserProfile  = (loserId === whiteProfile.id)  ? whiteProfile : blackProfile;
 
-    const { data: blackProfile } = await supabaseClient
-        .from("profiles")
-        .select("id, username, owner, dev, admin, coadmin, elo, blue_rooks")
-        .eq("id", game.black_id)
-        .single();
+  addBadgesToName(document.getElementById("winner"), winnerProfile, "🏆 Winner");
+  addBadgesToName(document.getElementById("loser"), loserProfile, "❌ Loser");
+  document.getElementById("reason").textContent = "Reason: " + (game.result_reason || "Unknown");
 
-    if (!whiteProfile || !blackProfile) {
-        alert("Profiles not found");
-        return;
-    }
+  let winnerScore = 1, loserScore = 0;
+  if (game.result_reason === "draw") { winnerScore=0.5; loserScore=0.5; }
 
-    // Determine winner & loser
-    const winnerId = game.winner_id;
-    const loserId = (winnerId === game.white_id) ? game.black_id : game.white_id;
-    const winnerProfile = (winnerId === whiteProfile.id) ? whiteProfile : blackProfile;
-    const loserProfile  = (loserId === whiteProfile.id)  ? whiteProfile : blackProfile;
+  const eloChangeWinner = calculateEloChange(winnerProfile.elo??1200, loserProfile.elo??1200, winnerScore);
+  const eloChangeLoser  = calculateEloChange(loserProfile.elo??1200, winnerProfile.elo??1200, loserScore);
 
-    addBadgesToName(document.getElementById("winner"), winnerProfile, "🏆 Winner");
-    addBadgesToName(document.getElementById("loser"), loserProfile, "❌ Loser");
-    document.getElementById("reason").textContent = "Reason: " + (game.result_reason || "Unknown");
+  // Elo
+  document.getElementById("eloChange").innerHTML = `
+    <div class="elo-row">
+      <span>${winnerProfile.username}</span>
+      <span><span id="winnerElo">${winnerProfile.elo}</span> 
+      <span class="change gain">+${eloChangeWinner}</span></span>
+    </div>
+    <div class="elo-row">
+      <span>${loserProfile.username}</span>
+      <span><span id="loserElo">${loserProfile.elo}</span> 
+      <span class="change loss">${eloChangeLoser}</span></span>
+    </div>
+  `;
+  animateNumber(document.getElementById("winnerElo"), winnerProfile.elo, winnerProfile.elo+eloChangeWinner, 1200);
+  animateNumber(document.getElementById("loserElo"), loserProfile.elo, loserProfile.elo+eloChangeLoser, 1200);
 
-    // Elo update
-    const resultReason = game.result_reason || "unknown";
-    let winnerScore = 1, loserScore = 0;
-    if (resultReason === "draw") {
-        winnerScore = 0.5;
-        loserScore = 0.5;
-    }
-
-    const eloChangeWinner = calculateEloChange(winnerProfile.elo ?? 1200, loserProfile.elo ?? 1200, winnerScore);
-    const eloChangeLoser  = calculateEloChange(loserProfile.elo ?? 1200, winnerProfile.elo ?? 1200, loserScore);
-
-    await supabaseClient.from("profiles").update({
-        elo: (winnerProfile.elo ?? 1200) + eloChangeWinner,
-        blue_rooks: (winnerProfile.blue_rooks ?? 0) + (resultReason === "draw" ? 5 : 10)
-    }).eq("id", winnerProfile.id);
-
-    await supabaseClient.from("profiles").update({
-        elo: (loserProfile.elo ?? 1200) + eloChangeLoser,
-        blue_rooks: (loserProfile.blue_rooks ?? 0) + (resultReason === "draw" ? 5 : 2)
-    }).eq("id", loserProfile.id);
-
-    // Show results
-    document.getElementById("eloChange").innerHTML = `
-        <span>${winnerProfile.username}</span>: ${winnerProfile.elo} → ${winnerProfile.elo + eloChangeWinner} 
-        <br><span>${loserProfile.username}</span>: ${loserProfile.elo} → ${loserProfile.elo + eloChangeLoser}
-    `;
-
-    document.getElementById("blueRookChange").innerHTML = `
-        <img src="files/img/blue-rook.png"> ${winnerProfile.username} gained ${resultReason === "draw" ? 5 : 10} Blue Rooks<br>
-        <img src="files/img/blue-rook.png"> ${loserProfile.username} gained ${resultReason === "draw" ? 5 : 2} Blue Rooks
-    `;
+  // Blue rooks
+  const rookChangeWinner = game.result_reason==="draw"?5:10;
+  const rookChangeLoser  = game.result_reason==="draw"?5:2;
+  document.getElementById("blueRookChange").innerHTML = `
+    <div class="currency-row">
+      <span><img src="files/img/blue-rook.png"> ${winnerProfile.username}</span>
+      <span id="winnerRooks">${winnerProfile.blue_rooks}</span> <span class="change gain">+${rookChangeWinner}</span>
+    </div>
+    <div class="currency-row">
+      <span><img src="files/img/blue-rook.png"> ${loserProfile.username}</span>
+      <span id="loserRooks">${loserProfile.blue_rooks}</span> <span class="change gain">+${rookChangeLoser}</span>
+    </div>
+  `;
+  animateNumber(document.getElementById("winnerRooks"), winnerProfile.blue_rooks, winnerProfile.blue_rooks+rookChangeWinner, 1200);
+  animateNumber(document.getElementById("loserRooks"), loserProfile.blue_rooks, loserProfile.blue_rooks+rookChangeLoser, 1200);
 })();
 </script>
 </body>
