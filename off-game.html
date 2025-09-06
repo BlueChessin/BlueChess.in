@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="chess.js/chess.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/particles.js"></script>
+<link rel="stylesheet" href="files/css/friendRes.css">
 <style>
     body {
         margin: 0;
@@ -251,6 +252,8 @@
     }
   }
 
+  import { initFriendSystem, sendFriendRequest } from "./files/js/friendRes.js";
+  initFriendSystem(); 
 
 
     checkAuth();
@@ -488,6 +491,9 @@ async function declineChallenge(matchId) {
             events: { onhover: { enable: true, mode: "repulse" } }
         }
     });
+
+    window.acceptChallenge = acceptChallenge;
+    window.declineChallenge = declineChallenge;
 </script>
 </body>
 </html>
