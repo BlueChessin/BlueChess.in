@@ -5,6 +5,7 @@
 <title>Blue Chess.in - Avatar Shop</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
+<link rel="stylesheet" href="./files/css/friendRes.css">
 <style>
   :root {
     --free:#22c55e;
@@ -256,6 +257,15 @@ const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY"; 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUserId = null;
+
+import { initFriendSystem, sendFriendRequest } from "./files/js/friendRes.js";
+  initFriendSystem(); 
+
+
+window.acceptChallenge = acceptChallenge;
+window.declineChallenge = declineChallenge;
+
+
 
 async function acceptChallenge(matchId) {
   const { data: match } = await supabaseClient
