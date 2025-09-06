@@ -6,6 +6,7 @@
 <meta name="description" content="View and customize your Blue Chess.in profile. Check your username, ELO rating, badges, and avatar.">
 <link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="./files/css/friendRes.css">
 <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 <style>
   :root {
@@ -218,6 +219,10 @@
 const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let currentUserId = null;
+import { initFriendSystem, sendFriendRequest } from "./files/js/friendRes.js";
+  initFriendSystem(); 
+
 
 async function loadProfile() {
   const { data: { user }, error } = await supabaseClient.auth.getUser();
@@ -398,6 +403,9 @@ async function declineChallenge(matchId) {
     },
     retina_detect: true
   });
+
+  window.acceptChallenge = acceptChallenge;
+  window.declineChallenge = declineChallenge;
 </script>
 </body>
 </html>
