@@ -7,6 +7,8 @@
   <link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <link rel="stylesheet" href="files/css/friendRes.css">
+  <script type="module" src="files/js/friendRes.js"></script>
   <style>
     body {
       margin: 0;
@@ -155,10 +157,15 @@
 <audio id="challengeSound" src="files/sound/challenge.wav" preload="auto"></audio>
 <audio id="acceptedSound" src="files/sound/accepted.wav" preload="auto"></audio>
 
-<script>
+<script type="module">
   const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let currentUserId = null;
+
+  import { initFriendSystem, sendFriendRequest } from "./files/js/friendRes.js";
+  initFriendSystem(); 
 
   async function checkAuth() {
     const { data: { user } } = await supabaseClient.auth.getUser();
@@ -183,6 +190,9 @@
       return;
     }
   }
+
+  
+
 
   document.getElementById("logoutBtn").addEventListener("click", async () => {
     await supabaseClient.auth.signOut();
@@ -300,6 +310,9 @@ async function declineChallenge(matchId) {
     },
     retina_detect: true
   });
+
+  window.acceptChallenge = acceptChallenge;
+window.declineChallenge = declineChallenge;
 </script>
 </body>
 </html>
