@@ -7,6 +7,7 @@
 <link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+<link rel="stylesheet" href="files/css/friendRes.css">
 <style>
   :root {
     --bg:#0b1f3a;
@@ -171,21 +172,24 @@
 <audio id="challengeSound" src="files/sound/challenge.wav" preload="auto"></audio>
 <audio id="acceptedSound" src="files/sound/accepted.wav" preload="auto"></audio>
 
-<script>
+<script type="module">
 const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUserId = null;
 
+import { initFriendSystem, sendFriendRequest } from "./files/js/friendRes.js";
+
 (async function init() {
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) { window.location.href = "index.html"; return; }
   currentUserId = user.id;
+  await initFriendSystem(); // Listen for incoming requests
   listenForMatchUpdates();
   loadFriends();
   loadUsers();
-})();
+})();;
 
 async function loadFriends() {
   const { data: profile } = await supabaseClient.from("profiles").select("friends").eq("id", currentUserId).single();
@@ -235,7 +239,7 @@ function createUserCard(profile) {
           </div>
         </div>
       </div>
-      <button class="challenge-btn" onclick="addFriend('${profile.id}')" style="background:var(--brand);">Add Friend</button>
+      <button class="challenge-btn" style="background:var(--brand);" onclick="sendFriendRequest('${profile.id}')">Add Friend</button>
     </div>`;
 }
 
@@ -244,16 +248,6 @@ async function loadUsers() {
   const container = document.getElementById("users");
   container.innerHTML = "";
   for (const p of profiles || []) container.insertAdjacentHTML("beforeend", createUserCard(p));
-}
-
-async function addFriend(friendId) {
-  const { data: profile } = await supabaseClient.from("profiles").select("friends").eq("id", currentUserId).single();
-  const friendsArr = profile?.friends || [];
-  if (friendsArr.includes(friendId)) return alert("Already a friend!");
-  friendsArr.push(friendId);
-  await supabaseClient.from("profiles").update({ friends: friendsArr }).eq("id", currentUserId);
-  alert("Friend added!");
-  loadFriends(); loadUsers();
 }
 
 async function sendChallenge(opponentId) {
@@ -323,6 +317,8 @@ particlesJS("particles-js", {
   },
   retina_detect: true
 });
+window.sendChallenge = sendChallenge;
+window.sendFriendRequest = sendFriendRequest;
 </script>
 </body>
 </html>
