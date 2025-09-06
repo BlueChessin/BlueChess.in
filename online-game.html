@@ -7,6 +7,7 @@
 <link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+<link rel="stylesheet" href="./files/css/friendRes.css">
 <style>
   :root {
     --bg:#0b1f3a;
@@ -256,6 +257,10 @@ let currentUserId = null;
   listenForMatchUpdates();
 })();
 
+import { initFriendSystem, sendFriendRequest } from "./files/js/friendRes.js";
+initFriendSystem(); 
+
+
 async function loadPlayers() {
   const { data: players } = await supabaseClient
     .from("profiles")
@@ -404,6 +409,9 @@ particlesJS("particles-js", {
   },
   retina_detect: true
 });
+
+window.acceptChallenge = acceptChallenge;
+window.declineChallenge = declineChallenge;
 </script>
 </body>
 </html>
