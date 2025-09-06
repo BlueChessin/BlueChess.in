@@ -1,0 +1,100 @@
+.friend-banner {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #004890;
+  color: white;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  z-index: 9999;
+  animation: slideUp 0.4s ease-out;
+}
+.friend-banner button {
+  margin-left: 8px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.friend-banner button:first-of-type {
+  background: #22c55e; color: white;
+}
+.friend-banner button:last-of-type {
+  background: #ff4d4d; color: white;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translate(-50%,20px); }
+  to   { opacity: 1; transform: translate(-50%,0); }
+}
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .friend-banner {
+    width: 90%;
+    font-size: 14px;
+    padding: 12px 16px;
+  }
+  .friend-banner button {
+    padding: 5px 10px;
+    font-size: 14px;
+  }
+}
+/* Additional styles for friend request list */
+.friend-request-list {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  z-index: 9998;
+}
+.friend-request-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+.friend-request-item:last-child {
+  border-bottom: none;
+}
+.friend-request-item button {
+  margin-left: 5px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.friend-request-item button.accept {
+  background: #22c55e; color: white;
+}
+.friend-request-item button.decline {
+  background: #ff4d4d; color: white;
+}
+/* Responsive adjustments for friend request list */
+@media (max-width: 600px) {
+  .friend-request-list {
+    width: 90%;
+    right: 5%;
+    bottom: 70px;
+    max-height: 300px;
+  }
+  .friend-request-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .friend-request-item button {
+    margin: 5px 0 0 0;
+    width: 100%;
+  }
+}
