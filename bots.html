@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
 <link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
+<link rel="stylesheet" href="./files/css/friendRes.css">
 <style>
   body {
     margin: 0; 
@@ -338,6 +339,13 @@ async function checkAuth() {
     }
   }
 
+import { initFriendSystem, sendFriendRequest } from "./files/js/friendRes.js";
+  initFriendSystem(); 
+
+
+window.acceptChallenge = acceptChallenge;
+window.declineChallenge = declineChallenge;
+  
   checkAuth();
   listenForMatchUpdates();
 
@@ -522,3 +530,4 @@ particlesJS("particles-js",{
 </script>
 </body>
 </html>
+
