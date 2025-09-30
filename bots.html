@@ -11,7 +11,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
 <link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
-<link rel="stylesheet" href="./files/css/friendRes.css">
+<link rel="stylesheet" href="files/css/friendRes.css">
+<script type="module" src="files/js/friendRes.js"></script>
 <style>
   body {
     margin: 0; 
@@ -48,7 +49,7 @@
   .board-sidebar.shifted { transform: translateX(-260px); }
   .bot-sidebar h2, .board-sidebar h2 { text-align: center; margin-bottom: 20px; }
 
-  
+  /* Bot card */
   .bot-card {
     background: rgba(28, 78, 137, 0.7);
     border-radius: 10px;
@@ -73,7 +74,7 @@
     font-weight: bold;
   }
 
-  
+  /* Start Game button */
   .start-btn {
     margin-top: 20px;
     padding: 12px;
@@ -100,7 +101,7 @@
   }
 
 
-  
+  /* Chessboard container */
   .board-container {
     margin: auto; padding: 20px;
     background: rgba(255,255,255,0.9);
@@ -110,7 +111,7 @@
   }
   #board { width: 520px; max-width: 90vw; }
 
-  
+  /* Slider */
   .slider-container { margin-top: 15px; text-align: center; }
   .slider-container input {
     width: 100%;
@@ -135,7 +136,7 @@
     font-weight: bold;
   }
 
- 
+  /* Custom radio buttons */
   .color-options {
     margin-top: 15px; text-align:center;
   }
@@ -153,7 +154,7 @@
     box-shadow: 0 0 10px #00b7ff;
   }
 
-  
+  /* Styled buttons */
   .board-sidebar button {
     margin-top: 12px;
     padding: 10px; border: none;
@@ -165,7 +166,7 @@
   }
   .board-sidebar button:hover { transform: scale(1.05); box-shadow: 0 0 20px #00b7ff; }
 
-  
+  /* Legal moves highlights */
   .highlight-square { background-color: rgba(255, 255, 0, 0.5) !important; }
   .possible-move {
     position: relative;
@@ -178,7 +179,7 @@
     position: absolute; top: 25%; left: 25%;
   }
 
-  
+  /* Modal */
   .modal {
     display: none; position: fixed; top: 0; left: 0;
     width: 100%; height: 100%;
@@ -212,7 +213,7 @@
     cursor: not-allowed;
     box-shadow: none;
   }
-  
+  /* Banners */
   .banner {
     position: fixed;
     bottom: 20px;
@@ -248,7 +249,7 @@
 <body>
 <div id="particles-js"></div>
 <div class="container">
-
+  <!-- Bot Selection Sidebar -->
   <div id="botSidebar" class="bot-sidebar">
     <h2>🤖 Choose Bot</h2>
     <div class="bot-card" onclick="selectBot('Leon',250)">Beginner: Leon (250 Elo)</div>
@@ -273,7 +274,7 @@
     <button class="start-btn" id="startBtn" onclick="startGame()" >🚀 Start Game</button>
   </div>
 
-  
+  <!-- Player Sidebar -->
   <div id="playerSidebar" class="board-sidebar">
     
     <img src="files/img/-w-logo.png" alt="Blue Chess.in" class="logo">
@@ -293,12 +294,13 @@
     <button onclick="window.location.href='home.html'">Go Home</button>
   </div>
 
+  <!-- Chessboard -->
   <div class="board-container">
     <div id="board"></div>
   </div>
 </div>
 
-
+<!-- Modal -->
 <div id="modal" class="modal">
   <div class="modal-content">
     <p id="modalText"></p>
@@ -316,6 +318,10 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUserId = null;
 
+import { initFriendSystem, sendFriendRequest } from "./files/js/friendRes.js";
+initFriendSystem(); 
+
+
 async function checkAuth() {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
@@ -324,14 +330,14 @@ async function checkAuth() {
     }
     currentUserId = user.id;
 
-    
+    // Banned check
     const { data: profile } = await supabaseClient.from("profiles").select("banned").eq("id", user.id).single();
     if (profile && profile.banned) {
       window.location.href = "banned.html";
       return;
     }
 
-    
+    // Maintenance check
     const { data: settings } = await supabaseClient.from("settings").select("maintenance").limit(1).single();
     if (settings && settings.maintenance) {
       window.location.href = "maintenance.html";
@@ -339,13 +345,6 @@ async function checkAuth() {
     }
   }
 
-import { initFriendSystem, sendFriendRequest } from "./files/js/friendRes.js";
-  initFriendSystem(); 
-
-
-window.acceptChallenge = acceptChallenge;
-window.declineChallenge = declineChallenge;
-  
   checkAuth();
   listenForMatchUpdates();
 
@@ -357,8 +356,10 @@ let board = Chessboard('board', {
 });
 let engine = null, currentBot = null, selectedColor = 'w', thinkTime = 1000, selectedSquare = null;
 
+// Modal system
 function showModal(msg){document.getElementById("modalText").textContent=msg;document.getElementById("modal").style.display="flex";}
 function closeModal(){document.getElementById("modal").style.display="none";}
+window.closeModal = closeModal;
 
 // Engine
 function loadEngine(){
@@ -376,27 +377,26 @@ function loadEngine(){
 function newBot(){
   window.location.reload();
 }
-function selectBot(name,elo){
-  if(!engine)loadEngine();
-  currentBot={name,elo};
+function selectBot(name, elo) {
+  if (!engine) loadEngine();
+  currentBot = { name, elo };
   engine.postMessage("ucinewgame");
   engine.postMessage("setoption name UCI_LimitStrength value true");
   engine.postMessage(`setoption name UCI_Elo value ${elo}`);
   showModal(`${name} selected (${elo} Elo)!`);
-  document.getElementById("selectedBot").textContent = `Selected Bot: ${name} (${elo} Elo)`;
-  document.getElementById("botSidebar").classList.add("hidden");
-  document.getElementById("playerSidebar").classList.remove("shifted");
-
   // Remove highlight from all bots
   document.querySelectorAll('.bot-card').forEach(card => card.classList.remove('selected'));
-
   // Highlight clicked bot
-  el.classList.add('selected');
-
+  // Find the bot card that matches the clicked bot and highlight it
+  document.querySelectorAll('.bot-card').forEach(card => {
+    if (card.textContent.includes(name)) {
+      card.classList.add('selected');
+    }
+  });
   // Enable Start Game button
   document.getElementById('startBtn').disabled = false;
-
 }
+window.selectBot = selectBot;
 function startGame(){
   if(!currentBot){showModal("Please select a bot first!");return;}
   selectedColor=document.querySelector('input[name="color"]:checked').value;
@@ -406,6 +406,7 @@ function startGame(){
   game.reset();board.position("start");
   if(selectedColor==='b'||(selectedColor==='r'&&Math.random()<0.5)){makeBotMove();}
 }
+window.startGame = startGame;
 
 // Highlighting
 function clearHighlights(){ $('#board .square-55d63').removeClass('highlight-square possible-move'); }
@@ -527,8 +528,9 @@ particlesJS("particles-js",{
   "particles":{"number":{"value":80},"size":{"value":3},"move":{"speed":2},"line_linked":{"enable":true,"opacity":0.2},"color":{"value":"#00b7ff"}},
   "interactivity":{"events":{"onhover":{"enable":true,"mode":"repulse"}}}
 });
+
+window.acceptChallenge = acceptChallenge;
+window.declineChallenge = declineChallenge;
 </script>
 </body>
 </html>
-
-
