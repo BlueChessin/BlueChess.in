@@ -194,12 +194,15 @@
       togglePassword.textContent = isPassword ? "visibility_off" : "visibility";
     });
 
+    async function init() { 
     // Maintenance check
     const { data: settings } = await supabaseClient.from("settings").select("maintenance").limit(1).single();
     if (settings && settings.maintenance) {
       window.location.href = "maintenance.html";
       return;
     }
+  };
+  init();
 
     // Theme toggle
     const themeSwitch = document.getElementById("themeSwitch");
@@ -256,4 +259,5 @@
 </body>
 </html>
  
+
 
