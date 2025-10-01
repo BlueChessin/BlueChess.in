@@ -220,6 +220,10 @@ const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUserId = null;
+async function init() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) { window.location.href = "index.html"; return; }
+  currentUserId = user.id;
 // Banned check
     const { data: profile } = await supabaseClient.from("profiles").select("banned").eq("id", user.id).single();
     if (profile && profile.banned) {
@@ -233,6 +237,8 @@ let currentUserId = null;
       window.location.href = "maintenance.html";
       return;
     }
+
+}
 import { initFriendSystem, sendFriendRequest } from "./files/js/friendRes.js";
   initFriendSystem(); 
 
