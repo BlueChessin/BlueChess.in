@@ -259,6 +259,11 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUserId = null;
 
 // Banned check
+    async function init() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) { window.location.href = "index.html"; return; }
+  currentUserId = user.id;
+// Banned check
     const { data: profile } = await supabaseClient.from("profiles").select("banned").eq("id", user.id).single();
     if (profile && profile.banned) {
       window.location.href = "banned.html";
@@ -271,6 +276,9 @@ let currentUserId = null;
       window.location.href = "maintenance.html";
       return;
     }
+
+}
+init();
 
 import { initFriendSystem, sendFriendRequest } from "./files/js/friendRes.js";
   initFriendSystem(); 
