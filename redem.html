@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Blue Chess.in – Lottery - Code Ticket</title>
+<link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(120deg,#02122a,#0f2b55);
+    color: white;
+    text-align: center;
+    padding: 40px;
+  }
+  h1 { margin-bottom: 10px; }
+  p { font-size: 1.2em; }
+  input {
+    padding: 12px;
+    border-radius: 6px;
+    border: none;
+    width: 250px;
+    font-size: 1.1em;
+    text-align: center;
+  }
+  button {
+    margin-top: 15px;
+    padding: 12px 18px;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: white;
+    background: #4aa3ff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:hover { background: #2d8cff; }
+
+  #particles-js {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      top: 0;
+      left: 0;
+    }
+
+  .title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px; 
+    background-color: #00045088; 
+    padding: 10px 20px;
+    border-radius: 10px;
+  }
+  #logo {
+    height: 60px;
+  }
+  span {
+    display: block;
+    margin-top: 20px;
+    font-size: 1.2em;
+  }
+  #codeInput {
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 6px;
+    border: none;
+    width: 250px;
+    font-size: 1.1em;
+    text-align: center;
+  }
+
+</style>
+</head>
+<body>
+  <div id="particles-js"></div>
+  <div class="title">
+    <button style="margin-right: 100px; height: auto;" onclick="window.location.href='home.html';">Go Home</button>  <img id="logo" src="./files/img/-w-logo.png" alt="BlueChess.in">  <h1>🎟️ Lottery – Redem Tickets</h1>
+  </div>
+  
+
+  <span>Enter Your Code</span>
+
+  <input type="text" id="codeInput" placeholder="Enter your code here" maxlength="5" minlength="5" />
+
+
+  <br>  <button id="redeemButton">Redeem Code</button>
+<script type="module">
+const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUserId = null;
+
+(async function init() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) { window.location.href = "index.html"; return; }
+  currentUserId = user.id;
+  // Banned check
+    const { data: profile } = await supabaseClient.from("profiles").select("banned").eq("id", user.id).single();
+    if (profile && profile.banned) {
+      window.location.href = "banned.html";
+      return;
+    }
+
+    // Maintenance check
+    const { data: settings } = await supabaseClient.from("settings").select("maintenance").limit(1).single();
+    if (settings && settings.maintenance) {
+      window.location.href = "maintenance.html";
+      return;
+    }
+})();
+
+function updateText(message) {
+  const span = document.querySelector('span');
+  span.textContent = message;
+}
+
+document.getElementById('redeemButton').addEventListener('click', async () => {
+  const { data: profile } = await supabaseClient
+    .from('profiles')
+    .select('blue_rooks')
+    .eq('id', currentUserId)
+    .single();
+  const code = document.getElementById('codeInput').value.trim().toUpperCase();
+  if (code.length !== 5) {
+    alert('Please enter a valid 5-character code.');
+    return;
+  } 
+  const { data, error } = await supabaseClient
+    .from('redeem_codes')
+    .select('*')
+    .eq('code', code)
+    .single();
+  if (error || !data) {
+    alert('Invalid code or code does not exist.');
+    return;
+  }
+  if (data.is_redeemed) {
+    alert('This code has already been redeemed.');
+    return;
+  } 
+  let prizeAmount = 0;
+  prizeAmount = data.reward;
+  const { error: updateError } = await supabaseClient
+    .from('redeem_codes')
+    .update({ is_redeemed: true, redeemed_by: currentUserId, redeemed_at: new Date() })
+    .eq('code', code);
+  if (updateError) {
+    alert('Error redeeming code. Please try again later.');
+    return;
+  }
+  const { error: balanceError } = await supabaseClient
+    .from('profiles')
+    .update({ blue_rooks: profile.blue_rooks + prizeAmount })
+    .eq('id', currentUserId);
+  if (balanceError) {
+    alert('Error updating balance. Please contact support.'); 
+    return;
+  }
+  updateText(`Success! You have redeemed ${prizeAmount} 🏰 Blue Rooks!`);
+  document.getElementById('codeInput').value = '';
+});
+
+
+  particlesJS("particles-js", {
+    particles: {
+      number: { value: 80, density: { enable: true, value_area: 800 } },
+      color: { value: "#4aa3ff" },
+      shape: { type: "circle" },
+      opacity: { value: 0.5 },
+      size: { value: 3 },
+      line_linked: { enable: true, distance: 150, color: "#4aa3ff", opacity: 0.4, width: 1 },
+      move: { enable: true, speed: 2 }
+    },
+    interactivity: {
+      detect_on: "canvas",
+      events: { onhover: { enable: true, mode: "repulse" } }
+    },
+    retina_detect: true
+  });
+</script>
+</body>
+</html>

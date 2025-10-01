@@ -33,6 +33,7 @@
     }
     .sidebar {
       width: 250px;
+      overflow-y: scroll;
       background: rgba(0,0,0,.25);
       color: white;
       padding: 20px;
@@ -128,6 +129,28 @@
   }
   .banner #green { background: #28a745; color: white; }
   .banner #red { background: #ff4d4d; color: white; }
+  ::-webkit-scrollbar {
+  width: 20px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: rgba(0,0,0,.1);
+  border-radius: 10px;
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: rgba(74,163,255,.6);
+  border-radius: 10px;
+  border: 6px solid rgba(0,0,0,0);
+  background-clip: padding-box;
+}
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(74,163,255,.9);
+  border-radius: 10px;
+}
   </style>
 </head>
 <body>
@@ -137,12 +160,16 @@
   <div class="sidebar">
     <img src="files/img/-w-logo.png" alt="Blue Chess.in" class="logo">
     <div class="menu">
-      <button onclick="window.location.href='profile.html'" id="profileBtn">Profile (<span id="username">Loading...</span>)</button>
+      <button onclick="window.location.href='profile.html'" id="profileBtn">👤 Profile (<span id="username">Loading...</span>)</button>
       <button onclick="location.href='bots.html'">🤖 Play Bot!</button>
       <button onclick="window.location.href='off-game.html'">🏁 Play Offline</button>
       <button onclick="window.location.href='online-game.html'">♕ Online Play</button>
-      <button onclick="window.location.href='friends.html'">♕ Play Friends</button>
+      <button onclick="window.location.href='friends.html'">🏁 Play Friends</button>
+      <button onclick="window.location.href='bluechat.html'">🗫 BlueChat</button>
+      <button onclick="window.location.href='leaderboard.html'">🏆 Leader Board</button>
+      <button onclick="window.location.href='lottery.html'">🤖 Play The Lottery</button>
       <button onclick="window.location.href='shop.html'">🛒 The Shop</button>
+      <button onclick="window.location.href='chessW.html'">❓ Watch Chess Videos</button>
       <button onclick="window.location.href='learnchess.html'">❓ How to Play</button>
       <button id="logoutBtn">🚪 Logout</button>
     </div>
@@ -174,7 +201,8 @@
       return;
     }
     currentUserId = user.id;
-    document.getElementById("username").textContent = user.user_metadata.username || user.email;
+    
+    document.getElementById("username").textContent = "Your Details" || user.email;
 
     // Banned check
     const { data: profile } = await supabaseClient.from("profiles").select("banned").eq("id", user.id).single();

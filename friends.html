@@ -184,6 +184,19 @@ import { initFriendSystem, sendFriendRequest } from "./files/js/friendRes.js";
 (async function init() {
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) { window.location.href = "index.html"; return; }
+  // Banned check
+    const { data: profile } = await supabaseClient.from("profiles").select("banned").eq("id", user.id).single();
+    if (profile && profile.banned) {
+      window.location.href = "banned.html";
+      return;
+    }
+
+    // Maintenance check
+    const { data: settings } = await supabaseClient.from("settings").select("maintenance").limit(1).single();
+    if (settings && settings.maintenance) {
+      window.location.href = "maintenance.html";
+      return;
+    }
   currentUserId = user.id;
   await initFriendSystem(); // Listen for incoming requests
   listenForMatchUpdates();

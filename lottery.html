@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Blue Chess.in – Lottery - Code Ticket</title>
+<link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(120deg,#02122a,#0f2b55);
+    color: white;
+    text-align: center;
+    padding: 40px;
+  }
+  h1 { margin-bottom: 10px; }
+  p { font-size: 1.2em; }
+  input {
+    padding: 12px;
+    border-radius: 6px;
+    border: none;
+    width: 250px;
+    font-size: 1.1em;
+    text-align: center;
+  }
+  button {
+    margin-top: 15px;
+    padding: 12px 18px;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: white;
+    background: #4aa3ff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:hover { background: #2d8cff; }
+  #codes {
+    margin-top: 20px;
+    font-size: 1.1em;
+    padding: 15px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    white-space: pre-wrap;
+  }
+  #particles-js {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      top: 0;
+      left: 0;
+    }
+  .code {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.2em;
+    background: rgba(0,0,0,0.2);
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin: 4px;
+    display: inline-block;
+  }
+  #codes button {
+    margin-left: 10px;
+    padding: 6px 10px;
+    font-size: 0.9em;
+    background: #22c55e;
+  }
+  span {
+    display: block;
+    margin: 15px 0;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+  <div id="particles-js"></div>
+  <button style="margin-right: 100px; height:auto; align-self: center;" onclick="window.location.href='home.html';">Go Home</button>
+  <h1>🎟️ Lottery – Buy Code Tickets</h1>
+  <p>Each ticket costs <b>50</b> <img src="./files/img/blue-rook.png" height="18"></p>
+  <input type="number" id="tickets" placeholder="Enter number of tickets" min="1" max="100">
+  <br>
+  <button id="buy">Buy Tickets</button>
+  <span>OR</span>
+  <button id="redeem">Redeem Tickets</button>
+  <div id="codes"></div>
+
+<script type="module">
+const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUserId = null;
+const TICKET_COST = 50;
+
+// login check
+(async function init() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) { window.location.href = "index.html"; return; }
+  currentUserId = user.id;
+  // Banned check
+    const { data: profile } = await supabaseClient.from("profiles").select("banned").eq("id", user.id).single();
+    if (profile && profile.banned) {
+      window.location.href = "banned.html";
+      return;
+    }
+
+    // Maintenance check
+    const { data: settings } = await supabaseClient.from("settings").select("maintenance").limit(1).single();
+    if (settings && settings.maintenance) {
+      window.location.href = "maintenance.html";
+      return;
+    }
+  // load existing unredeemed codes
+  loadCodes();
+})();
+
+document.getElementById("redeem").onclick = () => {
+  window.location.href = "redem.html";
+};
+
+// random redeem code
+function generateCode() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  return Array.from({length: 5}, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+}
+
+    document.getElementById("codes").innerHTML =
+      "The Codes You Bought wil Display Here!";
+  
+
+function randomAmount(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+document.getElementById("buy").onclick = async () => {
+  const numTickets = parseInt(document.getElementById("tickets").value);
+  if (isNaN(numTickets) || numTickets < 1 || numTickets > 100) {
+    alert("Please enter a valid number of tickets (1-100).");
+    return;
+  }
+
+  const totalCost = numTickets * TICKET_COST;
+
+  // get balance
+  const { data: profile } = await supabaseClient
+    .from("profiles")
+    .select("blue_rooks")
+    .eq("id", currentUserId)
+    .single();
+
+  if (!profile || profile.balence < totalCost) {
+    alert("❌ Insufficient Blue Rooks.");
+    return;
+  }
+
+  // deduct balance
+  await supabaseClient
+    .from("profiles")
+    .update({ blue_rooks: profile.blue_rooks - totalCost })
+    .eq("id", currentUserId);
+
+
+  const codes = [];
+  for (let i=0; i<numTickets; i++) {
+    const code = generateCode();
+    codes.push(code);
+    await supabaseClient.from("redeem_codes").insert({
+      code,
+      reward: randomAmount(10, 100),   
+      is_redeemed: false
+    });
+  }
+
+  document.getElementById("codes").innerHTML =
+    "✅ Successfully purchased!<br>Your new codes:<br><b><span class='code'>" + codes.join("<button id='copy'>Copy</button><br>")+ "<button id='copy'>Copy</button>" + "</span></b><br><br>Use them in <a href='redem.html'>Redeem Page</a>";
+  };
+
+  document.getElementById("codes").onclick = (e) => {
+    if (e.target.id === "copy") {
+      const code = e.target.previousSibling.textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        alert(`Copied code: ${code}`);
+      });
+    }
+  };
+
+  particlesJS("particles-js", {
+    particles: {
+      number: { value: 80, density: { enable: true, value_area: 800 } },
+      color: { value: "#4aa3ff" },
+      shape: { type: "circle" },
+      opacity: { value: 0.5 },
+      size: { value: 3 },
+      line_linked: { enable: true, distance: 150, color: "#4aa3ff", opacity: 0.4, width: 1 },
+      move: { enable: true, speed: 2 }
+    },
+    interactivity: {
+      detect_on: "canvas",
+      events: { onhover: { enable: true, mode: "repulse" } }
+    },
+    retina_detect: true
+  });
+</script>
+</body>
+</html>

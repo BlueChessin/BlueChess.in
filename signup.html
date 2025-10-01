@@ -179,6 +179,13 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY"; 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // Maintenance check
+    const { data: settings } = await supabaseClient.from("settings").select("maintenance").limit(1).single();
+    if (settings && settings.maintenance) {
+      window.location.href = "maintenance.html";
+      return;
+    }
+
     // Eye toggles
     function attachToggle(inputId, toggleId) {
       const input = document.getElementById(inputId);
@@ -211,30 +218,35 @@
 
     // Signup
     async function signUp() {
-      const name = document.getElementById("name").value.trim();
+      const user_name = document.getElementById("name").value.trim();
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
       const confirm = document.getElementById("confirm").value.trim();
       const msg = document.getElementById("message");
 
-      if (!name || !email || !password || !confirm) return msg.textContent="❌ All fields are required";
+      if (!user_name || !email || !password || !confirm) return msg.textContent="❌ All fields are required";
       if (password !== confirm) return msg.textContent="❌ Passwords do not match";
 
       msg.textContent = "⏳ Creating your account...";
       const { data, error } = await supabaseClient.auth.signUp({ email, password });
-      const { error: updateError } = await supabaseClient.from('profiles').insert([{ name: name}]);
-      if (updateError) console.error("Profile update error:", updateError);
       if (error) {
         console.error("Signup error:", error);
         msg.textContent = "❌ " + (error.message || "Signup failed");
-      } else {
-        msg.style.color = "var(--ok)";
-        msg.textContent = "✅ Account created! Please check your email to verify.";
-        document.getElementById("name").value = "";
-        document.getElementById("email").value = "";
-        document.getElementById("password").value = "";
-        document.getElementById("confirm").value = "";
+        return;
       }
+      
+      if (data && data.user && data.user.id) {
+        const { error: updateError } = await supabaseClient
+          .from('profiles')
+          .insert([{ id: data.user.id, username: user_name }]);
+        if (updateError) console.error("Profile update error:", updateError);
+      }
+      msg.style.color = "var(--ok)";
+      msg.textContent = "✅ Account created! Please check your email to verify.";
+      document.getElementById("name").value = "";
+      document.getElementById("email").value = "";
+      document.getElementById("password").value = "";
+      document.getElementById("confirm").value = "";
     }
 
     // Particles.js config
@@ -257,4 +269,3 @@
   </script>
 </body>
 </html>
-

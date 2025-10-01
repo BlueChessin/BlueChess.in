@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Blue Chess.in - Maintenance</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
   <style>
     body {
       background: linear-gradient(120deg,#02122a,#0f2b55);
@@ -24,14 +26,69 @@
     h1 { font-size: 26px; margin-bottom: 15px; color:#4aa3ff; }
     p { color:#aac7ff; }
     .muted { font-size:13px; margin-top:10px; opacity:.8 }
+    #particles-js {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      top: 0;
+      left: 0;
+    }
+    p {
+      margin: 10px 0;
+    }
   </style>
 </head>
 <body>
+  <div id="particles-js"></div>
   <div class="card">
     <h1>🔧 Maintenance Mode</h1>
     <p>Blue Chess.in is currently undergoing maintenance.</p>
     <p>Please check back later — we’ll be back online soon!</p>
+    <h5 id="reason"></h5>
     <p class="muted">Thank you for your patience</p>
   </div>
+  <script>
+    const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    (async () => {
+      const { data: settings } = await supabaseClient.from("settings").select("maintenance").limit(1).single();
+      if (settings && !settings.maintenance) {
+        alert("Maintenance mode is off. Redirecting to home page.");
+        window.location.href = "home.html";
+        return;
+      }
+    })();
+
+    async function fetchMaintenanceMessage() {
+      const { data: settings } = await supabaseClient.from("settings").select("maintenance").limit(1).single();
+      return settings ? settings.maintenance : false;
+      if (message && settings.message) {
+      document.getElementById("reason").textContent = settings.message;  
+      }
+    }
+
+    
+    
+    // Initialize particles.js
+    particlesJS("particles-js", {
+    particles: {
+      number: { value: 80, density: { enable: true, value_area: 800 } },
+      color: { value: "#4aa3ff" },
+      shape: { type: "circle" },
+      opacity: { value: 0.5 },
+      size: { value: 3 },
+      line_linked: { enable: true, distance: 150, color: "#4aa3ff", opacity: 0.4, width: 1 },
+      move: { enable: true, speed: 2 }
+    },
+    interactivity: {
+      detect_on: "canvas",
+      events: { onhover: { enable: true, mode: "repulse" } }
+    },
+    retina_detect: true
+  });
+  </script>
 </body>
 </html>

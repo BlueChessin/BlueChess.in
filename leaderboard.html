@@ -215,6 +215,38 @@
   }
   .banner #green { background: #28a745; color: white; }
   .banner #red { background: #ff4d4d; color: white; }
+    .banner button:hover {
+        opacity: 0.9;
+    }
+.players {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 5px;
+  --sb-track-color: #232E33;
+  --sb-thumb-color: #3f43cc;
+  --sb-size: 14px;
+}
+/* Track */
+::-webkit-scrollbar-track {
+  background: rgba(0,0,0,.1);
+  border-radius: 10px;
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: rgba(74,163,255,.6);
+  border-radius: 10px;
+  border: 6px solid rgba(0,0,0,0);
+  background-clip: padding-box;
+}
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(74,163,255,.9);
+  border-radius: 10px;
+}
 </style>
 </head>
 <body>
@@ -225,30 +257,31 @@
 <header class="title-bar">
     <button id="goHome" onclick="window.location.href='home.html'">Go Home</button>
   <img src="files/img/-w-logo.png" alt="BlueChess.in" class="title-logo">
-  <h1> -   Online Lobby</h1>
+  <h1> -   Leader Board</h1>
 </header>
 
 
 <div class="container">
-  <div class="player-list" id="playerList">
-    <p>Loading players...</p>
-  </div>
+  <div class="players"></div>
 </div>
 
 <audio id="challengeSound" src="files/sound/challenge.wav" preload="auto"></audio>
 <audio id="acceptedSound" src="files/sound/accepted.wav" preload="auto"></audio>
 
 <script type="module">
-/* Supabase setup */
+import { initFriendSystem, sendFriendRequest } from "./files/js/friendRes.js";
+initFriendSystem(); // Initialize friend system
+
 const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUserId = null;
 
+// Initialize user
 (async function init() {
-  const { data: { user } } = await supabaseClient.auth.getUser();
-  if (!user) {
+  const { data: { user }, error } = await supabaseClient.auth.getUser();
+  if (error || !user) {
     window.location.href = "index.html";
     return;
   }
@@ -266,53 +299,99 @@ let currentUserId = null;
       return;
     }
   currentUserId = user.id;
-  loadPlayers();
   listenForMatchUpdates();
+  fetchPlayers();
 })();
 
-import { initFriendSystem, sendFriendRequest } from "./files/js/friendRes.js";
-initFriendSystem(); 
+// Fetch and display leaderboard players
+async function fetchPlayers() {
+    const { data: players, error } = await supabaseClient
+        .from("profiles")
+        .select("id, username, profile, elo, owner, dev, admin, coadmin")
+        .order("elo", { ascending: false }); // sort by ELO descending
 
+    if (error) {
+        console.error("Error fetching players:", error);
+        return;
+    }
 
-async function loadPlayers() {
-  const { data: players } = await supabaseClient
-    .from("profiles")
-    .select("id, username, profile, owner, dev, admin, coadmin, elo, blue_rooks");
+    const container = document.querySelector(".players");
+    container.innerHTML = "";
 
-  const container = document.getElementById("playerList");
-  container.innerHTML = "";
+    players.forEach((player, index) => {
+        const card = document.createElement("div");
+        card.className = "player-card";
 
-  players.forEach(p => {
-    if (p.id === currentUserId) return;
-    const avatarUrl = p.profile 
-      ? `${SUPABASE_URL}/storage/v1/object/public/avatars/${p.profile}`
-      : "files/img/profiles/default-avatar.png";
+        const info = document.createElement("div");
+        info.className = "player-info";
 
-    const badges = [];
-    const badgeFolder = "files/img/badges/";
-    if (p.owner) badges.push(`<img src="${badgeFolder}owner.png">`);
-    if (p.dev) badges.push(`<img src="${badgeFolder}dev.png">`);
-    if (p.admin) badges.push(`<img src="${badgeFolder}admin.png">`);
-    if (p.coadmin) badges.push(`<img src="${badgeFolder}coadmin.png">`);
+        const rank = document.createElement("div");
+        rank.textContent = `#${index + 1}`; // rank starts at 1
+        rank.style.fontWeight = "bold";
+        rank.style.fontSize = "1.2em";
+        rank.style.marginRight = "15px";
+        rank.style.width = "40px";
+        rank.style.textAlign = "center";
 
-    const div = document.createElement("div");
-    div.className = "player-card";
-    div.innerHTML = `
-      <div class="player-info">
-        <img src="${avatarUrl}" alt="Profile">
-        <div class="details">
-          <div class="username">${p.username || "Unknown"}
-            <span class="badges">${badges.join("")}</span>
-          </div>
-          <div class="stats">ELO: ${p.elo || 1200} • 🏰 ${p.blue_rooks || 0}</div>
-        </div>
-      </div>
-      <button class="challenge-btn" onclick="sendChallenge('${p.id}')">Challenge</button>
-    `;
-    container.appendChild(div);
-  });
+        if (index === 0) rank.style.color = "gold"; 
+        else if (index === 1) rank.style.color = "silver";
+        else if (index === 2) rank.style.color = "#cd7f32"; 
+
+    else rank.style.color = "var(--brand)";
+    
+
+    if (index === 0) rank.style.fontSize = "30px";
+    if (index === 1) rank.style.fontSize = "25px";
+    if (index === 2) rank.style.fontSize = "22px";
+
+        const avatarUrl = `${SUPABASE_URL}/storage/v1/object/public/avatars/${player.profile}` || "files/img/profiles/default-avatar.png";
+        const avatar = document.createElement("img");
+        avatar.src = avatarUrl;
+        avatar.alt = player.username;
+
+        const details = document.createElement("div");
+        details.className = "details";
+
+        const username = document.createElement("div");
+        username.className = "username";
+        if (player.id === currentUserId) username.textContent = `${player.username} (You)`;
+        else username.textContent = player.username;
+        
+
+        // Badges based on flags
+        const badgesDiv = document.createElement("div");
+        badgesDiv.className = "badges";
+        if (player.owner) badgesDiv.innerHTML += `<img src="files/img/badges/owner.png" alt="Owner">`;
+        if (player.dev) badgesDiv.innerHTML += `<img src="files/img/badges/dev.png" alt="Dev">`;
+        if (player.admin) badgesDiv.innerHTML += `<img src="files/img/badges/admin.png" alt="Admin">`;
+        if (player.coadmin) badgesDiv.innerHTML += `<img src="files/img/badges/coadmin.png" alt="Co-admin">`;
+
+        const stats = document.createElement("div");
+        stats.className = "stats";
+        stats.textContent = "ELO: " + (player.elo ?? 1200);
+
+        details.appendChild(username);
+        details.appendChild(badgesDiv);
+        details.appendChild(stats);
+
+        info.appendChild(rank);
+        info.appendChild(avatar);
+        info.appendChild(details);
+
+        const challengeBtn = document.createElement("button");
+        challengeBtn.className = "challenge-btn";
+        challengeBtn.textContent = "Challenge";
+        challengeBtn.onclick = () => sendChallenge(player.id);
+
+        card.appendChild(info);
+        card.appendChild(challengeBtn);
+
+        container.appendChild(card);
+    });
 }
 
+
+// Send a challenge request
 async function sendChallenge(opponentId) {
   await supabaseClient
     .from("match_requests")
@@ -320,6 +399,7 @@ async function sendChallenge(opponentId) {
   alert("Challenge sent!");
 }
 
+// Listen for match updates
 function listenForMatchUpdates() {
   supabaseClient.channel("match_updates")
     .on("postgres_changes", { event: "*", schema: "public", table: "match_requests" }, payload => {
@@ -339,6 +419,7 @@ function listenForMatchUpdates() {
     .subscribe();
 }
 
+// Sounds
 function playSound(soundId) {
   const sound = document.getElementById(soundId);
   if (!sound) return;
@@ -346,20 +427,20 @@ function playSound(soundId) {
   sound.play().catch(() => {});
 }
 
+// Banners
 function showJoinBanner(gameId) {
   if (document.getElementById("joinBanner")) return;
   const banner = document.createElement("div");
   banner.id = "joinBanner";
   banner.className = "banner";
   banner.textContent = "✅ Your challenge was accepted! Click to join the game.";
-  banner.onclick = () => {
-    window.location.href = `play-game.html?game=${gameId}`;
-  };
+  banner.onclick = () => window.location.href = `play-game.html?game=${gameId}`;
   document.body.appendChild(banner);
 }
 
 async function showChallengeBanner(matchId, challengerId) {
   if (document.getElementById("challengeBanner")) return;
+
   const { data: challenger } = await supabaseClient
     .from("profiles")
     .select("username")
@@ -369,12 +450,13 @@ async function showChallengeBanner(matchId, challengerId) {
   const banner = document.createElement("div");
   banner.id = "challengeBanner";
   banner.className = "banner";
-  banner.innerHTML = `🎯 Challenge from <b>${challenger?.username || "Unknown"}</b> 
+  banner.innerHTML = `🎯 Challenge from <b>${challenger?.username || "Unknown"}</b>
     <button onclick="acceptChallenge('${matchId}')" id="green">Accept</button>
-    <button onclick="declineChallenge('${matchId}')"id="red">Decline</button>`;
+    <button onclick="declineChallenge('${matchId}')" id="red">Decline</button>`;
   document.body.appendChild(banner);
 }
 
+// Accept/Decline
 async function acceptChallenge(matchId) {
   const { data: match } = await supabaseClient
     .from("match_requests")
@@ -384,7 +466,7 @@ async function acceptChallenge(matchId) {
   if (!match) return;
 
   const white = Math.random() < 0.5 ? match.challenger_id : match.challenged_id;
-  const black = (white === match.challenger_id) ? match.challenged_id : match.challenger_id;
+  const black = white === match.challenger_id ? match.challenged_id : match.challenger_id;
 
   const { data: game } = await supabaseClient
     .from("games")
@@ -409,20 +491,7 @@ async function declineChallenge(matchId) {
   document.getElementById("challengeBanner")?.remove();
 }
 
-/* Particles background */
-particlesJS("particles-js", {
-  particles: {
-    number: { value: 100, density: { enable: true, value_area: 800 } },
-    color: { value: "#4aa3ff" },
-    shape: { type: "circle" },
-    opacity: { value: 0.5 },
-    size: { value: 3 },
-    line_linked: { enable: true, distance: 150, color: "#4aa3ff", opacity: 0.4, width: 1 },
-    move: { enable: true, speed: 2 }
-  },
-  retina_detect: true
-});
-
+// Expose globally for inline buttons
 window.acceptChallenge = acceptChallenge;
 window.declineChallenge = declineChallenge;
 </script>

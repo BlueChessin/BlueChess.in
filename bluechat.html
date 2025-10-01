@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Blue Chess.in – Blue Chat</title>
+<meta name="description" content="Join the Blue Chess.in online lobby to challenge friends and players around the world. Start your match instantly.">
+<link rel="shortcut icon" href="files/img/-s-logo.png" type="image/png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+<link rel="stylesheet" href="./files/css/friendRes.css">
+<style>
+:root {
+  --bg:#0b1f3a;
+  --panel:#0f2b55;
+  --muted:#aac7ff;
+  --brand:#4aa3ff;
+  --danger:#ff4d4d;
+  --ok:#22c55e;
+  --text:#e6f0ff;
+  --shadow:rgba(74,163,255,.6);
+}
+body {
+  font-family: Inter, sans-serif;
+  background: linear-gradient(120deg,#02122a,#0f2b55);
+  margin: 0;
+  color: var(--text);
+  overflow-x: hidden;
+}
+#particles-js {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  top: 0;
+  left: 0;
+}
+.title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  padding: 20px;
+  margin: 0;
+  background: linear-gradient(90deg, #003467, #0084a4, #22c55e);
+  background-size: 200% 200%;
+  animation: gradientShift 6s infinite alternate;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+.title-bar h1 {
+  margin: 0;
+  font-size: 2em;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 1px;
+  text-shadow: 0 0 8px rgba(255,255,255,.6);
+}
+.title-logo {
+  height: 50px;
+  width: auto;
+  filter: drop-shadow(0 0 8px rgba(74,163,255,.8));
+}
+#goHome {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  padding: 10px 15px;
+  background: var(--brand);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0 0 12px var(--shadow);
+  transition: background .2s, transform .2s;
+}
+@keyframes gradientShift {
+  from { background-position: 0% 50%; }
+  to { background-position: 100% 50%; }
+}
+.container {
+  max-width: 900px;
+  margin: 30px auto;
+  padding: 20px;
+}
+.chat {
+  height: 80vh;
+  width: 85%;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0,0,0,.3);
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  font-size: 1.1em;
+  line-height: 1.4em;
+  animation: glow 3s infinite alternate;
+}
+#chatMessages {
+  height: 80vh;
+  width: 93%;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0,0,0,.3);
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  font-size: 1.1em;
+  line-height: 1.4em;
+}
+#chatMessages p { margin: 0 0 10px 0; }
+#chatMessages p strong { color: var(--brand); }
+#chatInput {
+  width: 93%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.1);
+  color: white;
+  font-size: 1em;
+  resize: none;
+  box-shadow: 0 0 10px rgba(0,0,0,.2);
+  transition: border-color .2s;
+}
+#chatInput:focus {
+  border-color: var(--brand);
+  outline: none;
+  box-shadow: 0 0 15px var(--shadow);
+}
+#sendBtn {
+  margin-top: 10px;
+  padding: 12px 20px;
+  background: var(--brand);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0 0 12px var(--shadow);
+  transition: background .2s, transform .2s;
+}
+#sendBtn:hover { background: #2d8cff; transform: scale(1.05); }
+.status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 6px;
+  background: gray; /* offline default */
+}
+.status-online { background: #22c55e; } /* online */
+.status-playing { background: #f59e0b; } /* playing */
+/* Webkit browsers (Chrome, Edge, Safari) */
+#chatMessages::-webkit-scrollbar {
+    width: 10px; /* width of the scrollbar */
+}
+
+#chatMessages::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.05); /* track background */
+    border-radius: 8px;
+}
+
+#chatMessages::-webkit-scrollbar-thumb {
+    background: rgba(74,163,255,0.6); /* thumb color */
+    border-radius: 8px;
+    border: 2px solid rgba(0,0,0,0.2); /* optional border for depth */
+    width: 12px;
+}
+
+#chatMessages::-webkit-scrollbar-thumb:hover {
+    background: rgba(74,163,255,0.9); /* hover effect */
+}
+
+/* Firefox */
+#chatMessages {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(74,163,255,0.6) rgba(255,255,255,0.05);
+}
+
+/* Optional: smooth scrolling */
+#chatMessages {
+    scroll-behavior: smooth;
+}
+
+@keyframes glow {
+  from { box-shadow: 0 0 20px rgba(74,163,255,.2); }
+  to { box-shadow: 0 0 30px rgba(74,163,255,.4); }
+}
+
+#reload {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 10px 15px;
+  background: var(--brand);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0 0 12px var(--shadow);
+  transition: background .2s, transform .2s;
+}
+
+</style>
+</head>
+<body>
+<div id="particles-js"></div>
+
+<header class="title-bar">
+  <button id="goHome" onclick="window.location.href='home.html'">Go Home</button>
+  <img src="files/img/-w-logo.png" alt="BlueChess.in" class="title-logo">
+  <h1> - Blue Chat</h1>
+  <button id="reload" onclick="window.location.href='bluechat.html'">Reload Chat</button>
+</header>
+
+<div class="container">
+  <div class="chat">
+    <div id="chatMessages">Loading chat...</div>
+    <button id="scrollBtn" style="
+  display:none;
+  position: fixed;
+  bottom: 100px;
+  right: 30px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  background: var(--brand);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 0 12px var(--shadow);
+  z-index: 9999;
+">⬇ New Messages</button>
+
+    <textarea id="chatInput" rows="3" placeholder="Type your message..."></textarea>
+    <button id="sendBtn">Send</button>
+  </div>
+  <div class="player-list" id="playerList"></div>
+
+</div>
+
+<audio id="challengeSound" src="files/sound/challenge.wav" preload="auto"></audio>
+<audio id="acceptedSound" src="files/sound/accepted.wav" preload="auto"></audio>
+
+<script type="module">
+const SUPABASE_URL = "https://ruevzmnbhoowmuleeqjb.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXZ6bW5iaG9vd211bGVlcWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTUzNTIsImV4cCI6MjA2OTk3MTM1Mn0.tt_xEAqLGiv92mvqhQaEvsjTBE6cmYDC3kkQcyPqsTY";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUserId = null;
+const chatMessages = document.getElementById("chatMessages");
+const chatInput = document.getElementById("chatInput");
+const sendBtn = document.getElementById("sendBtn");
+
+import Filter from "https://esm.sh/bad-words@3?dev";
+
+(async function init() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) { window.location.href = "index.html"; return; };
+  currentUserId = user.id;
+  const { data: settings } = await supabaseClient.from("settings").select("maintenance").limit(1).single();
+    if (settings && settings.maintenance) {
+      window.location.href = "maintenance.html";
+      return;
+    }
+  loadChat();
+})();
+
+async function checkAuth() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+      window.location.href = "index.html";
+      return;
+    }
+    currentUserId = user.id;
+
+    // Banned check
+    const { data: profile } = await supabaseClient.from("profiles").select("banned").eq("id", user.id).single();
+    if (profile && profile.banned) {
+      window.location.href = "banned.html";
+      return;
+    }
+
+    // Maintenance check
+    const { data: settings } = await supabaseClient.from("settings").select("maintenance").limit(1).single();
+    if (settings && settings.maintenance) {
+      window.location.href = "maintenance.html";
+      return;
+    }
+  }
+
+  checkAuth();
+
+const scrollBtn = document.getElementById("scrollBtn");
+
+chatMessages.addEventListener("scroll", () => {
+  const atBottom = chatMessages.scrollTop + chatMessages.clientHeight >= chatMessages.scrollHeight - 20;
+  scrollBtn.style.display = atBottom ? "none" : scrollBtn.style.display;
+});
+
+// Show button when new message arrives and user is not at bottom
+function appendMessageWithScroll(profile, message, isSelf, timestamp) {
+  const atBottom = chatMessages.scrollTop + chatMessages.clientHeight >= chatMessages.scrollHeight - 20;
+  appendMessage(profile, message, isSelf, timestamp);
+  if (!atBottom) scrollBtn.style.display = "block";
+}
+
+scrollBtn.onclick = () => {
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  scrollBtn.style.display = "none";
+};
+
+
+async function getProfileInfo(userId) {
+  const { data: profile } = await supabaseClient
+    .from("profiles")
+    .select("username, profile, owner, dev, admin, coadmin")
+    .eq("id", userId)
+    .single();
+  return profile;
+}
+
+function getBadgesHTML(profile) {
+  if (!profile) return "";
+  const badgeFolder = "files/img/badges/";
+  let html = "";
+  if (profile.owner) html += `<img src="${badgeFolder}owner.png" title="Owner" style="height:18px;">`;
+  if (profile.dev) html += `<img src="${badgeFolder}dev.png" title="Dev" style="height:18px;">`;
+  if (profile.admin) html += `<img src="${badgeFolder}admin.png" title="Admin" style="height:18px;">`;
+  if (profile.coadmin) html += `<img src="${badgeFolder}coadmin.png" title="Co-Admin" style="height:18px;">`;
+  return html;
+}
+
+function getAvatarUrl(profile) {
+  if (profile?.profile) {
+    return `${SUPABASE_URL}/storage/v1/object/public/avatars/${profile.profile}`;
+  }
+  return "files/img/profiles/default-avatar.png";
+}
+
+// --- Append message with dynamic timestamp ---
+function appendMessage(profile, message, isSelf, timestamp = new Date()) {
+  
+  const msgDiv = document.createElement("div");
+  msgDiv.style.display = "flex";
+  msgDiv.style.alignItems = "center";
+  msgDiv.style.margin = "10px 0";
+  msgDiv.style.gap = "10px";
+  msgDiv.style.justifyContent = isSelf ? "flex-end" : "flex-start";
+
+  const avatar = document.createElement("img");
+  avatar.src = getAvatarUrl(profile);
+  avatar.alt = "avatar";
+  avatar.style.width = "38px";
+  avatar.style.height = "38px";
+  avatar.style.borderRadius = "50%";
+  avatar.style.border = "2px solid #4aa3ff";
+  avatar.style.background = "#0b1f3a";
+  avatar.style.objectFit = "cover";
+  msgDiv.appendChild(avatar);
+
+  const bubble = document.createElement("div");
+  if (message === "was banned for using inappropriate language." || message === "was banned for using inappropriate language.‎") {
+    bubble.style.background = "var(--danger)";
+    bubble.style.fontStyle = "italic";
+  } else {
+    bubble.style.background = isSelf ? "var(--brand)" : "var(--panel)";
+  }
+  bubble.style.color = "white";
+  bubble.style.padding = "10px 16px";
+  bubble.style.borderRadius = "14px";
+  bubble.style.maxWidth = "340px";
+  bubble.style.boxShadow = "0 2px 8px rgba(74,163,255,0.08)";
+  bubble.style.position = "relative";
+  bubble.style.wordBreak = "break-word";
+
+  const nameRow = document.createElement("div");
+  nameRow.style.fontWeight = "bold";
+  nameRow.style.fontSize = "1em";
+  nameRow.style.marginBottom = "2px";
+  nameRow.innerHTML = `${profile?.username || "Unknown"} <span class="badges">${getBadgesHTML(profile)}</span>`;
+  bubble.appendChild(nameRow);
+
+  const msgText = document.createElement("div");
+  msgText.textContent = message;
+  bubble.appendChild(msgText);
+
+  // Timestamp logic
+  const timeDiv = document.createElement("div");
+  timeDiv.style.fontSize = "0.75em";
+  timeDiv.style.color = "#ccc";
+  timeDiv.style.marginTop = "4px";
+
+  const msgDate = new Date(timestamp);
+  const now = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(now.getDate() - 1);
+
+  const hours = String(msgDate.getHours()).padStart(2, "0");
+  const minutes = String(msgDate.getMinutes()).padStart(2, "0");
+
+  if (msgDate.toDateString() === now.toDateString()) {
+    timeDiv.textContent = `${hours}:${minutes}`;
+  } else if (msgDate.toDateString() === yesterday.toDateString()) {
+    timeDiv.textContent = `Yesterday ${hours}:${minutes}`;
+  } else {
+    const day = String(msgDate.getDate()).padStart(2, "0");
+    const month = String(msgDate.getMonth() + 1).padStart(2, "0");
+    const year = msgDate.getFullYear();
+    timeDiv.textContent = `${day}/${month}/${year} ${hours}:${minutes}`;
+  }
+
+  bubble.appendChild(timeDiv);
+  msgDiv.appendChild(bubble);
+  chatMessages.appendChild(msgDiv);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// --- Load chat messages ---
+async function loadChat() {
+  chatMessages.innerHTML = "Loading chat...";
+  const { data, error } = await supabaseClient
+    .from("chat")
+    .select("id, user_id, message, inserted_at")
+    .order("inserted_at", { ascending: true })
+    .limit(100);
+
+  if (error) { chatMessages.innerHTML = "Failed to load chat."; return; }
+
+  chatMessages.innerHTML = "";
+  for (const msg of data) {
+    const profile = await getProfileInfo(msg.user_id);
+    appendMessage(profile, msg.message, msg.user_id === currentUserId, msg.inserted_at);
+  }
+}
+
+async function loadPlayers() {
+  const { data: players } = await supabaseClient
+    .from("profiles")
+    .select("id, username, last_active");
+
+  const now = new Date();
+  const playerList = document.getElementById("playerList");
+  playerList.innerHTML = "";
+
+  players.forEach(player => {
+    const div = document.createElement("div");
+    div.style.marginBottom = "10px";
+    const dot = document.createElement("span");
+    dot.className = "status-dot";
+
+    // Consider online if last_active within 2 min
+    const lastActive = new Date(player.last_active);
+    if ((now - lastActive) / 1000 < 120) dot.classList.add("status-online");
+
+    div.appendChild(dot);
+    div.appendChild(document.createTextNode(player.username));
+    playerList.appendChild(div);
+  });
+}
+
+// Update last_active periodically
+setInterval(async () => {
+  if (!currentUserId) return;
+  await supabaseClient
+    .from("profiles")
+    .update({ last_active: new Date() })
+    .eq("id", currentUserId);
+}, 30000); // every 30 sec
+
+loadPlayers();
+
+
+// --- Send chat ---
+sendBtn.onclick = async () => {
+  const { data: profile } = await supabaseClient.from("profiles").select("owner").eq("id", currentUserId).single();
+  const owner = profile?.owner;
+  const msg = chatInput.value.trim();
+  const filter = new Filter();
+  if (!msg) return;
+  if (filter.isProfane(msg)) {
+    if (owner) {
+      alert("⚠️ Warning: Your message contains inappropriate language. You will not be banned as you are the Owner.");
+
+    } else {
+      alert("⚠️ Your message contains inappropriate language and you have been banned.");
+      // Say in the chat that user was banned for bad words
+      await supabaseClient.from("chat").insert({ user_id: currentUserId, message: "was banned for using inappropriate language.‎" });
+      banPlayer(currentUserId); 
+      return;
+    }
+    
+  }
+  
+  sendBtn.disabled = true;
+  await supabaseClient.from("chat").insert({ user_id: currentUserId, message: msg });
+  chatInput.value = "";
+  sendBtn.disabled = false;
+};
+function banPlayer(userId) {
+  supabaseClient
+    .from("profiles")
+    .update({ banned: true })
+    .eq("id", userId)
+    .then(() => {
+      window.location.href = "banned.html";
+    });
+}
+
+chatInput.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
+});
+
+chatInput.addEventListener("keydown", async (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    const msg = chatInput.value.trim();
+    if (!msg) return;
+
+    // Check if it's a challenge command
+    if (msg.startsWith("/challenge ")) {
+      const username = msg.slice(11).replace("@", "").trim();
+      await handleChallengeCommand(username);
+      chatInput.value = "";
+      return;
+    }
+
+    // Regular message
+    sendBtn.disabled = true;
+    await supabaseClient.from("chat").insert({ user_id: currentUserId, message: msg });
+    chatInput.value = "";
+    sendBtn.disabled = false;
+  }
+});
+async function handleChallengeCommand(username) {
+  // Fetch the user ID of the username
+  const { data: user } = await supabaseClient
+    .from("profiles")
+    .select("id, username")
+    .ilike("username", username)
+    .single();
+
+  if (!user) {
+    alert(`User "${username}" not found.`);
+    return;
+  }
+
+  // Cannot challenge yourself
+  if (user.id === currentUserId) {
+    alert("You cannot challenge yourself!");
+    return;
+  }
+
+  sendChallenge(user.id);
+  
+  alert(`Challenge sent to ${user.username}!`);
+
+  
+}
+
+async function sendChallenge(opponentId) {
+  await supabaseClient
+    .from("match_requests")
+    .insert({ challenger_id: currentUserId, challenged_id: opponentId, status: "pending" });
+  alert("Challenge sent!");
+}
+
+
+
+// --- Realtime listener ---
+supabaseClient.channel("chat")
+.on("postgres_changes", { event: "INSERT", schema: "public", table: "chat" }, async payload => {
+  const msg = payload.new;
+  const profile = await getProfileInfo(msg.user_id);
+  appendMessage(profile, msg.message, msg.user_id === currentUserId, msg.inserted_at);
+})
+.subscribe();
+
+// --- Particles background ---
+particlesJS("particles-js", {
+  particles: {
+    number: { value: 100, density: { enable: true, value_area: 800 } },
+    color: { value: "#4aa3ff" },
+    shape: { type: "circle" },
+    opacity: { value: 0.5 },
+    size: { value: 3 },
+    line_linked: { enable: true, distance: 150, color: "#4aa3ff", opacity: 0.4, width: 1 },
+    move: { enable: true, speed: 2 }
+  },
+  retina_detect: true
+});
+</script>
+</body>
+</html>
